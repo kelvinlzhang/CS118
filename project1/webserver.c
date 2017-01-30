@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/stat.h>
-#define PORT "2080" // the port users will be connecting to
+#define PORT "8081" // the port users will be connecting to
 #define BACKLOG 10 // how many pending connections queue will hold
 
 void sigchld_handler(int s)
