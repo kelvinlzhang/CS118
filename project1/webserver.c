@@ -15,6 +15,10 @@
 #define PORT "8081" // the port users will be connecting to
 #define BACKLOG 10 // how many pending connections queue will hold
 
+char *consolePrint(int);
+void sendFile(int, char*);
+void generateResponse(int, char*, size_t);
+
 void sigchld_handler(int s)
 {
     while(waitpid(-1, NULL, WNOHANG) > 0);
@@ -96,7 +100,7 @@ int main(int argc, char *argv[])
 
             char *filename;
             //filename = consolePrint(new_fd);
-            //serveFile(new_fd, filename); // serve requested file to client
+            //sendFile(new_fd, filename); // send file to browser
 
             close(new_fd);
             exit(0);
@@ -108,7 +112,7 @@ int main(int argc, char *argv[])
 
 char *consolePrint(int sock)
 {
-	char *formatted;
+    char *formatted;
     //dump to console
     return formatted;
 }
