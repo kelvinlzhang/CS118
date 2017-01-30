@@ -95,8 +95,8 @@ int main(int argc, char *argv[])
             close(sockfd); // child doesn't need the listener
 
             char *filename;
-            filename = requestDump(new_fd); // dump request message to console, fetch filename
-            serveFile(new_fd, filename); // serve requested file to client
+            //filename = consolePrint(new_fd);
+            //serveFile(new_fd, filename); // serve requested file to client
 
             close(new_fd);
             exit(0);
@@ -104,4 +104,11 @@ int main(int argc, char *argv[])
         close(new_fd); // parent doesn't need this
     }
     return 0;
+}
+
+char *consolePrint(int sock)
+{
+	char *formatted;
+    //dump to console
+    return formatted;
 }
