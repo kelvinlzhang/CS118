@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
             close(sockfd); // child doesn't need the listener
 
             char *filename;
-            //filename = consolePrint(new_fd);
+            filename = consolePrint(new_fd);
             //sendFile(new_fd, filename); // send file to browser
 
             close(new_fd);
@@ -112,7 +112,19 @@ int main(int argc, char *argv[])
 
 char *consolePrint(int sock)
 {
-    char *formatted;
-    //dump to console
-    return formatted;
+    char request[1024];
+    memset(request, 0, 1024);
+
+    if (read(sock, request, 1023) < 0)
+        perror("socket: error reading");
+
+    printf("HTTP Request Message:\n%s", request);
+
+    char *filename = strtok(request, " ");
+    filename = strtok(NULL, " ");
+    filename++;
+
+    if(strlen(request) <= 0) filename = "";
+
+    return filename;
 }
