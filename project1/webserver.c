@@ -98,8 +98,7 @@ int main(int argc, char *argv[])
         if (!fork()) { // this is the child process
             close(sockfd); // child doesn't need the listener
 
-            char *filename;
-            filename = consolePrint(new_fd);
+            char *filename = consolePrint(new_fd);
             //sendFile(new_fd, filename); // send file to browser
 
             close(new_fd);
@@ -120,11 +119,11 @@ char *consolePrint(int sock)
 
     printf("HTTP Request Message:\n%s", request);
 
-    char *filename = strtok(request, " ");
+    char *filename = strtok(request, " "); //extract file name from request
     filename = strtok(NULL, " ");
     filename++;
 
-    if(strlen(request) <= 0) filename = "";
+    if(strlen(filename) <= 0) filename = ""; //if no filename, set "" to handle later
 
     return filename;
 }
