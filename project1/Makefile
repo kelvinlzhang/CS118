@@ -1,11 +1,10 @@
 CC=gcc
-CFLAGS=-I.
-DEPS=
+CFLAGS=-I. -g -O -Wall -Wextra
 OBJ = webserver.o
 
-%.o: %.c $(DEPS)
+%.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-webserver: $(OBJ)
+webserver: $(OBJ);
 	$(CC) -o $@ $^ $(CFLAGS)
 

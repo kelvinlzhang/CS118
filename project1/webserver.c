@@ -99,8 +99,8 @@ int main(int argc, char *argv[])
             close(sockfd); // child doesn't need the listener
 
             char *filename = consolePrint(new_fd);
-            //sendFile(new_fd, filename); // send file to browser
-
+			printf("file name: %s\n",filename);
+            sendFile(new_fd, filename); // send file to browser
             close(new_fd);
             exit(0);
         }
@@ -119,11 +119,27 @@ char *consolePrint(int sock)
 
     printf("HTTP Request Message:\n%s", request);
 
-    char *filename = strtok(request, " "); //extract file name from request
+    char *filename;
+    filename = strtok(request, " "); //extract file name from request
     filename = strtok(NULL, " ");
     filename++;
 
-    if(strlen(filename) <= 0) filename = ""; //if no filename, set "" to handle later
+    if(strlen(filename) <= 0)
+        filename = ""; //if no filename, set "" to handle 404
 
     return filename;
+}
+
+void sendFile (int sock, char *filename)
+{
+    printf("file name: %s\n",filename);
+
+    static char* status_404 =
+        "HTTP/1.1 404 Not Found\r\n\r\n<h1>Error 404: File Not Found!<h1>";
+
+    if (strcmp(filename, "") == 0)
+    {
+        send(sock, status_404, strlen(status_404), 0);
+        perror("server: can not locate file in local dir");
+    }
 }
