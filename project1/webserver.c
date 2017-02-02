@@ -17,7 +17,7 @@
 
 char *consolePrint(int);
 void sendFile(int, char*);
-void generateResponse(int, char*, size_t);
+void createHTTPResponse(int, char*, size_t);
 
 void sigchld_handler(int s)
 {
@@ -138,7 +138,7 @@ char *consolePrint(int sock)
 }
 
 void sendFile (int sock, char *filename)
-{ 
+{
     printf("file name: %s\n",filename);
 
     //declare this elsewhere
@@ -146,28 +146,47 @@ void sendFile (int sock, char *filename)
         "HTTP/1.1 404 Not Found\r\n\r\n<h1>Error 404: File Not Found!<h1>";
 
     //file not found
-    if(filename == "")
+    if(strcmp(filename, "") == 0)
+    {
+        send(sock, status_404, strlen(status_404),0);
+        perror("server: no file selected");
+        return;
+    }
+
+    FILE *fd = fopen(filename, "r");
+
+    if(fd == NULL)
     {
         send(sock, status_404, strlen(status_404),0);
         perror("server: cannot locate file in local dir");
         return;
     }
 
+    if(fseek(fd, 0L, SEEK_END))
+    {
+        int filelen = ftell(fd);
+        if (filelen == -1L)
+        {
+            send(sock, status_404, strlen(status_404),0);
+            perror("server: file size error");
+            return;
+        }
 
-    //source buffer for open and read
+        char *src = malloc(filelen+1);
 
-    //check if file is ?? is this extra
+        fseek(fd, 0L, SEEK_SET);
+        size_t srclen = fread(src, 1, filelen, fd);
+        if (ferror(fd)) perror("server: error reading file");
 
-    //check for file size error checks and stuff
-    // fseek to mve to the end ... set all 
-        //get current position in stream.....
+        src[srclen] = '\0';
 
-    //get length of file
+        createHTTPResponse(sock, filename, srclen);
+        send(sock, src, srclen, 0);
+        printf("file %s send to browser", filename);
 
-    //check for fread errors...
-
-
-
+       free(src);
+    }
+    fclose(fd);
 }
 
 void createHTTPResponse(int sock, char *filename, size_t filelen)
@@ -216,6 +235,10 @@ void createHTTPResponse(int sock, char *filename, size_t filelen)
     //     contentType = GIF;
     // }
 
+    //generate HTTP response
+
+
+    static char* header = "HTTP/ 1.1";
 
 
 }
