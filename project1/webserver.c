@@ -100,6 +100,13 @@ int main(int argc, char *argv[])
 
             char *filename = consolePrint(new_fd);
 			printf("file name: %s\n",filename);
+
+
+
+
+
+
+
             sendFile(new_fd, filename); // send file to browser
             close(new_fd);
             exit(0);
@@ -142,7 +149,7 @@ void sendFile (int sock, char *filename)
     if(filename == "")
     {
         send(sock, status_404, strlen(status_404),0);
-        perror("server: cannot locate file in local dir")
+        perror("server: cannot locate file in local dir");
         return;
     }
 
@@ -165,16 +172,50 @@ void sendFile (int sock, char *filename)
 
 void createHTTPResponse(int sock, char *filename, size_t filelen)
 {
-
-    
-    //generate HTTP response 
+    char buffer[1024];
 
 
-    static char* header = "HTTP/ 1.1"; 
-    send(sock, header, strlen(header), 0);
+    char *header = "HTTP/ 1.1 200 OK\r\n"; 
+    // printf("%s", header);
 
-    static char *connection;
+    char *connection;
 
 
-    char buffer[512];
+    char store[50];
+    time_t now = time(0);
+    struct tm timeinfo = *gmtime(&now); //derefenced?
+    strftime(store, sizeof store, "%a, %d %b %Y %H:%M:%S %Z", &timeinfo);
+    char datebuff[20] = "Date: ";
+    strcat(datebuff, store);
+    strcat(datebuff, "\r\n");
+    // printf("%s",datebuff);
+
+
+    char *server = "Server: KelvinLauren/1.1\r\n";
+
+    // char *lastmod;
+    // struct tm* lastmoded;
+    // struct sta
+
+    // char *content_length;
+    char contentlen[50];
+    sprintf (len, "")
+
+    strcat("Content-Length: ")
+
+
+    // char *content_type;
+    // if (strstr(filename, ".html") !=NULL) 
+    // {
+    //     contentType = HTML;
+    // } else if ((strstr(filename, ".jpg") !=NULL) || (strstr(filename, ".jpeg") !=NULL)
+    // {
+    //     contentType = JPEG;
+    // } else if (strstr(filename, ".gif") !=NULL)
+    // {
+    //     contentType = GIF;
+    // }
+
+
+
 }
