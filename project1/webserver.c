@@ -131,15 +131,48 @@ char *consolePrint(int sock)
 }
 
 void sendFile (int sock, char *filename)
-{
+{ 
     printf("file name: %s\n",filename);
 
-    static char* status_404 =
+    //declare this elsewhere
+    static char *status_404 =
         "HTTP/1.1 404 Not Found\r\n\r\n<h1>Error 404: File Not Found!<h1>";
 
-    if (strcmp(filename, "") == 0)
+    //file not found
+    if(filename == "")
     {
-        send(sock, status_404, strlen(status_404), 0);
-        perror("server: can not locate file in local dir");
+        send(sock, status_404, strlen(status_404),0);
+        perror("server: cannot locate file in local dir")
+        return;
     }
+
+
+    //source buffer for open and read
+
+    //check if file is ?? is this extra
+
+    //check for file size error checks and stuff
+    // fseek to mve to the end ... set all 
+        //get current position in stream.....
+
+    //get length of file
+
+    //check for fread errors...
+
+    //generate HTTP response 
+
+
+    static char* header = "HTTP/ 1.1"; 
+    send(sock, header, strlen(header), 0);
+
+    char buffer[512];
+    static char *connection 
+
+
+    //sets position indicator associated with stream to new position
+
+
+
+
+
 }
