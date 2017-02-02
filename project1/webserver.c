@@ -159,20 +159,22 @@ void sendFile (int sock, char *filename)
 
     //check for fread errors...
 
+
+
+}
+
+void createHTTPResponse(int sock, char *filename, size_t filelen)
+{
+
+    
     //generate HTTP response 
 
 
     static char* header = "HTTP/ 1.1"; 
     send(sock, header, strlen(header), 0);
 
+    static char *connection;
+
+
     char buffer[512];
-    static char *connection 
-
-
-    //sets position indicator associated with stream to new position
-
-
-
-
-
 }
