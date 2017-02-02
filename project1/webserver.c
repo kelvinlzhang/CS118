@@ -103,10 +103,6 @@ int main(int argc, char *argv[])
 
 
 
-
-
-
-
             sendFile(new_fd, filename); // send file to browser
             close(new_fd);
             exit(0);
@@ -138,7 +134,7 @@ char *consolePrint(int sock)
 }
 
 void sendFile (int sock, char *filename)
-{
+{   
     printf("file name: %s\n",filename);
 
     //declare this elsewhere
@@ -155,6 +151,13 @@ void sendFile (int sock, char *filename)
 
     FILE *fd = fopen(filename, "r");
 
+
+        //TEST
+    int filelen = ftell(fd);
+    createHTTPResponse(sock, filename, filelen);
+
+
+
     if(fd == NULL)
     {
         send(sock, status_404, strlen(status_404),0);
@@ -164,6 +167,7 @@ void sendFile (int sock, char *filename)
 
     if(fseek(fd, 0L, SEEK_END))
     {
+        //fix this
         int filelen = ftell(fd);
         if (filelen == -1L)
         {
@@ -171,7 +175,6 @@ void sendFile (int sock, char *filename)
             perror("server: file size error");
             return;
         }
-
         char *src = malloc(filelen+1);
 
         fseek(fd, 0L, SEEK_SET);
@@ -179,7 +182,7 @@ void sendFile (int sock, char *filename)
         if (ferror(fd)) perror("server: error reading file");
 
         src[srclen] = '\0';
-
+        printf("About to call");
         createHTTPResponse(sock, filename, srclen);
         send(sock, src, srclen, 0);
         printf("file %s send to browser", filename);
@@ -189,56 +192,69 @@ void sendFile (int sock, char *filename)
     fclose(fd);
 }
 
-void createHTTPResponse(int sock, char *filename, size_t filelen)
+void createHTTPResponse(int sock, char *filename, size_t filesize)
 {
     char buffer[1024];
-
-
+    //header status
     char *header = "HTTP/ 1.1 200 OK\r\n"; 
-    // printf("%s", header);
+    printf("%s", header);
 
-    char *connection;
-
-
-    char store[50];
+    
+    //date
+    char dstore[50];
     time_t now = time(0);
     struct tm timeinfo = *gmtime(&now); //derefenced?
-    strftime(store, sizeof store, "%a, %d %b %Y %H:%M:%S %Z", &timeinfo);
+    strftime(dstore, sizeof dstore, "%a, %d %b %Y %H:%M:%S %Z", &timeinfo);
     char datebuff[20] = "Date: ";
-    strcat(datebuff, store);
+    strcat(datebuff, dstore);
     strcat(datebuff, "\r\n");
-    // printf("%s",datebuff);
+    printf("%s",datebuff);
 
-
+    //server
     char *server = "Server: KelvinLauren/1.1\r\n";
+    printf("%s", server);
 
-    // char *lastmod;
-    // struct tm* lastmoded;
-    // struct sta
+    //last modified
+    char mstore[50];
+    struct stat charac;
+    stat(filename, &charac);
+    struct tm lastmod = *gmtime(&(charac.st_mtime));
+    strftime(mstore, sizeof mstore, "%a, %d %b %Y %H:%M:%S %Z", &lastmod);
+    char lastmodbuff[20] = "Last-Modified: ";
+    strcat(lastmodbuff, mstore);
+    strcat(lastmodbuff, "\r\n");
+    printf("%s",lastmodbuff);
 
-    // char *content_length;
-    char contentlen[50];
-    sprintf (len, "")
 
-    strcat("Content-Length: ")
+    //content length
+    char lstore[20];
+    sprintf (lstore, "%d", filesize);
+    char conlenbuff[20] = "Content-Length: ";
+    strcat(conlenbuff, lstore);
+    strcat(conlenbuff, "\r\n");
+    printf("%s", conlenbuff);
 
 
-    // char *content_type;
-    // if (strstr(filename, ".html") !=NULL) 
-    // {
-    //     contentType = HTML;
-    // } else if ((strstr(filename, ".jpg") !=NULL) || (strstr(filename, ".jpeg") !=NULL)
-    // {
-    //     contentType = JPEG;
-    // } else if (strstr(filename, ".gif") !=NULL)
-    // {
-    //     contentType = GIF;
-    // }
+    char *contypebuff;
+    if (strstr(filename, ".html") !=NULL) 
+    {
+        contypebuff = "HTML";
+    } else if ((strstr(filename, ".jpg") !=NULL) || (strstr(filename, ".jpeg") !=NULL))
+    {
+        contypebuff = "JPEG";
+    } else if (strstr(filename, ".gif") !=NULL)
+    {
+        contypebuff = "GIF";
+    } else if (strstr(filename, ".txt") !=NULL ) //MIMI file?
+    {
+
+    }
+    printf("%s", contypebuff);
 
     //generate HTTP response
 
-
-    static char* header = "HTTP/ 1.1";
+    //connection
+    char *connection = "Connection Closed\r\n";
 
 
 }
