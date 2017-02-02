@@ -1,14 +1,9 @@
 CC=gcc
-CFLAGS=-I. -g -O -Wall -Wextra
-OBJ = webserver.o
+CFLAGS= -g -Wall -Wextra
 
-%.o: %.c
-	$(CC) -c -o $@ $< $(CFLAGS)
-
-webserver: $(OBJ);
-	$(CC) -o $@ $^ $(CFLAGS)
-	./$@
+default: webserver.c
+	$(CC) $(CFLAGS) webserver.c -o webserver
 
 clean:
-	rm *.o
+	rm -rf webserver *.o
 
