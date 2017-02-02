@@ -151,13 +151,6 @@ void sendFile (int sock, char *filename)
 
     FILE *fd = fopen(filename, "r");
 
-
-        //TEST
-    int filelen = ftell(fd);
-    createHTTPResponse(sock, filename, filelen);
-
-
-
     if(fd == NULL)
     {
         send(sock, status_404, strlen(status_404),0);
