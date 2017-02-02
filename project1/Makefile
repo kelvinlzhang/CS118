@@ -7,4 +7,8 @@ OBJ = webserver.o
 
 webserver: $(OBJ);
 	$(CC) -o $@ $^ $(CFLAGS)
+	./$@
+
+clean:
+	rm *.o
 
