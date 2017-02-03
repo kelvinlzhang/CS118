@@ -157,8 +157,8 @@ void sendFile (int sock, char *filename)
         perror("server: cannot locate file in local dir");
         return;
     }
-
-    if(fseek(fd, 0L, SEEK_END))
+    int fsk = fseek(fd,0L,SEEK_END);
+    if(fsk == 0)
     {
         //fix this
         int filelen = ftell(fd);
@@ -175,11 +175,9 @@ void sendFile (int sock, char *filename)
         if (ferror(fd)) perror("server: error reading file");
 
         src[srclen] = '\0';
-        printf("About to call");
         createHTTPResponse(sock, filename, srclen);
         send(sock, src, srclen, 0);
         printf("file %s send to browser", filename);
-
        free(src);
     }
     fclose(fd);
@@ -187,18 +185,16 @@ void sendFile (int sock, char *filename)
 
 void createHTTPResponse(int sock, char *filename, size_t filesize)
 {
-    char buffer[1024];
     //header status
     char *header = "HTTP/ 1.1 200 OK\r\n"; 
     printf("%s", header);
 
-    
     //date
     char dstore[50];
     time_t now = time(0);
     struct tm timeinfo = *gmtime(&now); //derefenced?
     strftime(dstore, sizeof dstore, "%a, %d %b %Y %H:%M:%S %Z", &timeinfo);
-    char datebuff[20] = "Date: ";
+    char datebuff[50] = "Date: ";
     strcat(datebuff, dstore);
     strcat(datebuff, "\r\n");
     printf("%s",datebuff);
@@ -213,7 +209,7 @@ void createHTTPResponse(int sock, char *filename, size_t filesize)
     stat(filename, &charac);
     struct tm lastmod = *gmtime(&(charac.st_mtime));
     strftime(mstore, sizeof mstore, "%a, %d %b %Y %H:%M:%S %Z", &lastmod);
-    char lastmodbuff[20] = "Last-Modified: ";
+    char lastmodbuff[50] = "Last-Modified: ";
     strcat(lastmodbuff, mstore);
     strcat(lastmodbuff, "\r\n");
     printf("%s",lastmodbuff);
@@ -222,32 +218,43 @@ void createHTTPResponse(int sock, char *filename, size_t filesize)
     //content length
     char lstore[20];
     sprintf (lstore, "%d", filesize);
-    char conlenbuff[20] = "Content-Length: ";
+    char conlenbuff[30] = "Content-Length: ";
     strcat(conlenbuff, lstore);
     strcat(conlenbuff, "\r\n");
     printf("%s", conlenbuff);
 
-
-    char *contypebuff;
+    //content type
+    char *tstore;
+    char contypebuff[50] = "Content-Type: ";
     if (strstr(filename, ".html") !=NULL) 
     {
-        contypebuff = "HTML";
+        tstore = "HTML\r\n";
     } else if ((strstr(filename, ".jpg") !=NULL) || (strstr(filename, ".jpeg") !=NULL))
     {
-        contypebuff = "JPEG";
+        tstore = "JPEG\r\n";
     } else if (strstr(filename, ".gif") !=NULL)
     {
-        contypebuff = "GIF";
-    } else if (strstr(filename, ".txt") !=NULL ) //MIMI file?
-    {
-
+        tstore = "GIF\r\n";
     }
+    strcat(contypebuff, tstore);
     printf("%s", contypebuff);
 
-    //generate HTTP response
-
     //connection
-    char *connection = "Connection Closed\r\n";
+    char *connection = "Connection: Closed\r\n";
+    printf("%s", connection);
 
+    char buffer[1024] = "";
+    strcat(buffer, header);
+    strcat(buffer, datebuff);
+    strcat(buffer, server);
+    strcat(buffer, lastmodbuff);
+    strcat(buffer, conlenbuff);
+    strcat(buffer, contypebuff);
+    strcat(buffer, connection);
 
+    // printf("JUST TO DEBUG: print msg once more\r\n %s", buffer);
+
+    //send entire header to client
+    //DISPLAYS THE HEADER?
+    //send(sock, buffer, strlen(buffer),0);
 }
