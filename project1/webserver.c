@@ -99,10 +99,6 @@ int main(int argc, char *argv[])
             close(sockfd); // child doesn't need the listener
 
             char *filename = consolePrint(new_fd);
-			printf("file name: %s\n",filename);
-
-
-
             sendFile(new_fd, filename); // send file to browser
             close(new_fd);
             exit(0);
@@ -134,12 +130,8 @@ char *consolePrint(int sock)
 }
 
 void sendFile (int sock, char *filename)
-{   
-    printf("file name: %s\n",filename);
-
-    //declare this elsewhere
-    static char *status_404 =
-        "HTTP/1.1 404 Not Found\r\n\r\n<h1>Error 404: File Not Found!<h1>";
+{
+    static char *status_404 = "HTTP/1.1 404 Not Found\r\n\r\n<h1>Error 404: File Not Found!<h1>";
 
     //file not found
     if(strcmp(filename, "") == 0)
@@ -157,10 +149,11 @@ void sendFile (int sock, char *filename)
         perror("server: cannot locate file in local dir");
         return;
     }
+
     int fsk = fseek(fd,0L,SEEK_END);
     if(fsk == 0)
     {
-        //fix this
+        //determine size
         int filelen = ftell(fd);
         if (filelen == -1L)
         {
@@ -168,6 +161,8 @@ void sendFile (int sock, char *filename)
             perror("server: file size error");
             return;
         }
+
+        //create buffer for reading in source
         char *src = malloc(filelen+1);
 
         fseek(fd, 0L, SEEK_SET);
@@ -175,10 +170,12 @@ void sendFile (int sock, char *filename)
         if (ferror(fd)) perror("server: error reading file");
 
         src[srclen] = '\0';
+
+        //send header+file to browser
         createHTTPResponse(sock, filename, srclen);
         send(sock, src, srclen, 0);
         printf("file %s send to browser", filename);
-       free(src);
+        free(src);
     }
     fclose(fd);
 }
@@ -186,7 +183,7 @@ void sendFile (int sock, char *filename)
 void createHTTPResponse(int sock, char *filename, size_t filesize)
 {
     //header status
-    char *header = "HTTP/ 1.1 200 OK\r\n"; 
+    char *header = "HTTP/1.1 200 OK\r\n";
     printf("%s", header);
 
     //date
@@ -226,7 +223,7 @@ void createHTTPResponse(int sock, char *filename, size_t filesize)
     //content type
     char *tstore;
     char contypebuff[50] = "Content-Type: ";
-    if (strstr(filename, ".html") !=NULL) 
+    if (strstr(filename, ".html") !=NULL)
     {
         tstore = "HTML\r\n";
     } else if ((strstr(filename, ".jpg") !=NULL) || (strstr(filename, ".jpeg") !=NULL))
@@ -240,7 +237,7 @@ void createHTTPResponse(int sock, char *filename, size_t filesize)
     printf("%s", contypebuff);
 
     //connection
-    char *connection = "Connection: Closed\r\n";
+    char *connection = "Connection: Closed\r\n\r\n";
     printf("%s", connection);
 
     char buffer[1024] = "";
@@ -256,5 +253,5 @@ void createHTTPResponse(int sock, char *filename, size_t filesize)
 
     //send entire header to client
     //DISPLAYS THE HEADER?
-    //send(sock, buffer, strlen(buffer),0);
+    send(sock, buffer, strlen(buffer),0);
 }

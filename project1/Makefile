@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS= -g -Wall -Wextra
+CFLAGS= -g
 
 default: webserver.c
 	$(CC) $(CFLAGS) webserver.c -o webserver
