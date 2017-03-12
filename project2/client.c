@@ -10,6 +10,8 @@
 #include <netdb.h>
 #include <time.h>
 
+#include "packethandler.h"
+
 int main(int argc, char *argv[])
 {
     int sockfd;
