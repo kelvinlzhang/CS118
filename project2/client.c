@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
     if (argc != 4)
     {
-        fprintf(stderr,"Input must follow: client < hostname > < portnumber > < filename >\n");
+        fprintf(stderr,"ERROR args: client < hostname > < portnumber > < filename >\n");
         exit(1);
     }
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
     if (p == NULL)
     {
-        fprintf(stderr, "ERROR: client failed to bind socket\n");
+        fprintf(stderr, "ERROR: binding socket\n");
         return 2;
     }
 
