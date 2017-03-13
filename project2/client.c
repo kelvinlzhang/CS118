@@ -17,8 +17,9 @@ int main(int argc, char *argv[])
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
+
     int numbytes;
-    char buf[1024];
+    char buf[MAXPACKETSIZE];
 
     if (argc != 4)
     {
@@ -62,4 +63,23 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(servinfo);
 
+    int seq = 0;
+    int ack = 0;
+    int len = 0;
+    int fin = 0;
+    int next_seq = 0;
+
+    FILE *fp = fopen("received.data", "w+");
+
+    while (fin != 1)
+    {
+        numbytes = recvPacket(sockfd, buf, &len, p->ai_addr, &(p->ai_addrlen), &seq, &ack, &fin);
+        buf[numbytes] = '\0';
+        printf("Received %d bytes with sequence #%d\n", numbytes, seq);
+
+        numbytes = sendPacket(sockfd, buf, len, p->ai_addr, p->ai_addrlen, seq, seq+len, fin);
+        fwrite(buf, 1, len, fp);
+        printf("Sent ACK #%d\n", seq+len);
+        next_seq += MAXPACKETSIZE;
+    }
 }

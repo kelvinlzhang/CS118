@@ -12,7 +12,7 @@
 
 #include "packethandler.h"
 
-#define CWND 5
+#define CWND 5120
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -27,11 +27,12 @@ int main(int argc, char *argv[])
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    int numbytes;
     struct sockaddr_storage their_addr;
-    char buf[MAXBUFLEN+HEADERSIZE];
     socklen_t addr_len;
     char s[INET6_ADDRSTRLEN];
+
+    int numbytes;
+    char buf[MAXPACKETSIZE];
 
     if (argc != 2)
     {
@@ -48,7 +49,7 @@ int main(int argc, char *argv[])
 
     if ((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0)
     {
-        fprintf(stderr, "ERROR: getaddrinfo";
+        fprintf(stderr, "ERROR: getaddrinfo");
         return 1;
     }
 

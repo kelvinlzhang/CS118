@@ -11,7 +11,7 @@
 
 #include "packethandler.h"
 
-int sendPacket(int sockfd, char *buf, size_t len, struct sockaddr *dest_addr, socklen_t addrlen, int seq, int ack, int fin)
+int sendPacket(int sockfd, char *buf, int len, struct sockaddr *dest_addr, socklen_t addrlen, int seq, int ack, int fin)
 {
     char* temp = malloc(HEADERSIZE + len);
     bzero(temp, HEADERSIZE + len);
@@ -30,7 +30,7 @@ int sendPacket(int sockfd, char *buf, size_t len, struct sockaddr *dest_addr, so
 }
 
 
-int recvPacket(int sockfd, char *buf, size_t *len, struct sockaddr *src_addr, socklen_t *addrlen, int *seq, int *ack, int *fin)
+int recvPacket(int sockfd, char *buf, int *len, struct sockaddr *src_addr, socklen_t *addrlen, int *seq, int *ack, int *fin)
 {
     char temp[MAXPACKETSIZE];
     bzero(buf, MAXPACKETSIZE);
