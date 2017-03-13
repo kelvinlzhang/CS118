@@ -82,4 +82,8 @@ int main(int argc, char *argv[])
         printf("Sent ACK #%d\n", seq+len);
         next_seq += MAXPACKETSIZE;
     }
+
+    fclose(fp);
+    close(sockfd);
+    return 0;
 }

@@ -67,7 +67,6 @@ int main(int argc, char *argv[])
             perror("ERROR: binding socket");
             continue;
         }
-
         break;
     }
 
@@ -78,4 +77,48 @@ int main(int argc, char *argv[])
     }
 
     freeaddrinfo(servinfo);
+
+    if ((numbytes = recvfrom(sockfd, buf, MAXPACKETSIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len)) == -1)
+    {
+        perror("ERROR: did not receive filename");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    printf("Requested filename: %s\n", buf);
+
+    char *file_data = NULL;
+    FILE *fp = fopen(buf, "r");
+    size_t file_len;
+
+    if (fp==NULL)
+    {
+        sendPacket(sockfd, buf, strlen(buf), (struct sockaddr *)&their_addr, addr_len, 0, 0, 1);
+        printf("ERROR: file not found!\n");
+        exit(1);
+    }
+
+    if (fseek(fp, 0L, SEEK_END) == 0)
+    {
+        long fsize = ftell(fp);
+        file_data = malloc(fsize + 1);
+
+        fseek(fp, 0L, SEEK_SET);
+
+        file_len = fread(file_data, 1, fsize, fp);
+
+        if (file_len == 0)
+        {
+            sendPacket(sockfd, buf, strlen(buf), (struct sockaddr *)&their_addr, addr_len, 0, 0, 1);
+            free(file_data);
+            printf("ERROR: could not read file\n");
+            exit(1);
+        }
+
+        file_data[file_len] = '\0';
+    }
+
+    fclose(fp);
+
+    close(sockfd);
+    return 0;
 }
