@@ -119,6 +119,22 @@ int main(int argc, char *argv[])
 
     fclose(fp);
 
+    int seq = 0;
+    int ack = 0;
+    int len = 0;
+    int fin = 0;
+    int next_ack = 0;
+    int bytes_sent = 0;
+    int index = 0;
+
+    while (fin != 1)
+    {
+        while (index < file_len && bytes_sent < CWND)
+        {
+
+        }
+    }
+
     close(sockfd);
     return 0;
 }
