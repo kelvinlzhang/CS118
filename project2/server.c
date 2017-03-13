@@ -22,6 +22,46 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+void printSendMsg(int seqNum, int wnd, bool retrFlag, bool synFlag, bool finFlag)
+{
+	char buffer[70] = "Sending packet";
+	//convert int to string for seqNum
+	char seqNumBuf[10]= " ";
+	sprintf(seqNumBuf,"%d", seqNum);
+	strcat(buffer,seqNumBuf);
+
+	//convert int to string for wnd
+	char wndNumBuf[10] = " ";
+	sprintf(wndNumBuf, "%d", wnd);
+	strcat(buffer, wndNumBuf);
+
+	if (retrFlag)
+	{
+		strcat(buffer, " Retransmission");
+	}
+	if (synFlag)
+	{
+		strcat(buffer, " SYN");
+	}
+	if (finFlag)
+	{
+		strcat(buffer, " FIN");
+	}
+	printf("%s", buffer);
+
+}
+
+void printRcvMsg(int ackNum)
+{
+	char buffer[50] = "Receiving packet";
+	char ackNumBuf[10] = " ";
+	sprintf(ackNumBuf, "%d", ackNum);
+	strcat(buffer, ackNumBuf);
+	printf("%s", buffer);	
+
+}
+
+
 int main(int argc, char *argv[])
 {
     int sockfd;
@@ -53,6 +93,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    //create and bind socket
     for(p = servinfo; p != NULL; p = p->ai_next)
     {
         if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
@@ -106,6 +147,11 @@ int main(int argc, char *argv[])
 
         file_len = fread(file_data, 1, fsize, fp);
 
+        //int file_sizeToRead = file_len;
+        //while (file_sizeTorRead > MAXPACKETSIZE)
+        {
+        	sendPacket(sockfd, buf, strlen(buf), (s))
+        }
         if (file_len == 0)
         {
             sendPacket(sockfd, buf, strlen(buf), (struct sockaddr *)&their_addr, addr_len, 0, 0, 1);
