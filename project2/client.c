@@ -12,6 +12,20 @@
 
 #include "packethandler.h"
 
+
+
+void printRcvMsg(int seqNum)
+{
+	char buffer[50] = "Receiving packet";
+	char seqNumBuf[10] = " ";
+	sprintf(seqNumBuf, "%d", seqNum);
+	strcat(buffer, seqNumBuf);
+	printf("%s", buffer);	
+
+}
+
+
+
 int main(int argc, char *argv[])
 {
     int sockfd;
@@ -41,7 +55,7 @@ int main(int argc, char *argv[])
 
     for(p = servinfo; p != NULL; p = p->ai_next)
     {
-        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1);
         {
             perror("ERROR: socket creation");
             continue;

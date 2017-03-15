@@ -15,7 +15,6 @@ int sendPacket(int sockfd, char *buf, int len, struct sockaddr *dest_addr, sockl
 {
     char* temp = malloc(HEADERSIZE + len);
     bzero(temp, HEADERSIZE + len);
-
     memcpy(temp, &seq, sizeof(int));
     memcpy(temp+4, &ack, sizeof(int));
     memcpy(temp+8, &fin, sizeof(int));
@@ -45,3 +44,14 @@ int recvPacket(int sockfd, char *buf, int *len, struct sockaddr *src_addr, sockl
 
     return byteRecv;
 }
+
+
+struct pkt {
+    int ackNum;
+    int seqNum;
+    int retrFlag;
+    int synFlag;
+    int finFlag;
+    int size;
+    char data[MAXPACKETSIZE];
+};
