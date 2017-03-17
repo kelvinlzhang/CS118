@@ -11,23 +11,13 @@
 
 #include "packethandler.h"
 
-struct Packet {
-    int ackNum;
-    int seqNum;
-    int retrans;
-    int syn;
-    int fin;
-    int len;
-    char *buf;
-};
-
 
 //char *buf, int len,  int seq, int ack, int fin
 int sendPacket(int sockfd, struct sockaddr *dest_addr, socklen_t addrlen, Packet *pkt)
 {
     char* temp = malloc(HEADERSIZE + pkt->len);
     bzero(temp, HEADERSIZE + pkt->len);
-    
+
     memcpy(temp, pkt->seqNum, sizeof(int));
     memcpy(temp+4, pkt->ackNum, sizeof(int));
     memcpy(temp+8, pkt->fin, sizeof(int));

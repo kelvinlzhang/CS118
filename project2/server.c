@@ -23,49 +23,8 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-void printSendMsg(int seqNum, int wnd, int retrFlag, int synFlag, int finFlag)
-{
-	char buffer[70] = "Sending packet";
-	//convert int to string for seqNum
-	char seqNumBuf[10];
-	sprintf(seqNumBuf," %d", seqNum);
-	strcat(buffer,seqNumBuf);
-
-	//convert int to string for wnd
-	char wndNumBuf[10];
-	sprintf(wndNumBuf, " %d", wnd);
-	strcat(buffer, wndNumBuf);
-
-	if (retrFlag)
-	{
-		strcat(buffer, " Retransmission");
-	}
-	if (synFlag)
-	{
-		strcat(buffer, " SYN");
-	}
-	if (finFlag)
-	{
-		strcat(buffer, " FIN");
-	}
-	printf("%s", buffer);
-
-}
-
-void printRcvMsg(int ackNum)
-{
-	char buffer[50] = "Receiving packet";
-	char ackNumBuf[10] = " ";
-	sprintf(ackNumBuf, " %d", ackNum);
-	strcat(buffer, ackNumBuf);
-	printf("%s", buffer);	
-
-}
-
-
 int main(int argc, char *argv[])
 {
-	printf("Server on\n");
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
@@ -133,9 +92,11 @@ int main(int argc, char *argv[])
     FILE *fp = fopen(buf, "r");
     size_t file_len;
 
+    Packet errorPacket = {0, 0, 0, 0, 1, 0};
+
     if (fp==NULL)
     {
-        sendPacket(sockfd, buf, strlen(buf), (struct sockaddr *)&their_addr, addr_len, 0, 0, 1);
+        sendPacket(sockfd, (struct sockaddr *)&their_addr, addr_len, &errorPacket);
         printf("ERROR: file not found!\n");
         exit(1);
     }
@@ -149,11 +110,11 @@ int main(int argc, char *argv[])
 
         file_len = fread(file_data, 1, fsize, fp);
         {
-        	sendPacket(sockfd, buf, strlen(buf), (struct sockaddr*)&their_addr, addr_len, 0, 0, 1);
+            sendPacket(sockfd, (struct sockaddr *)&their_addr, addr_len, &errorPacket);
         }
         if (file_len == 0)
         {
-            sendPacket(sockfd, buf, strlen(buf), (struct sockaddr *)&their_addr, addr_len, 0, 0, 1);
+            sendPacket(sockfd, (struct sockaddr *)&their_addr, addr_len, &errorPacket);
             free(file_data);
             printf("ERROR: could not read file\n");
             exit(1);
@@ -170,8 +131,8 @@ int main(int argc, char *argv[])
                 //set packet size to be amount of file left
     		// curSeqNum = (add packet size to curSeqNum) mod by MAXSEQNUM
     		// send packet, start timer
-    		// 
-                
+    		//
+
 
     fclose(fp);
 
