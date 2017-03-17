@@ -1,15 +1,12 @@
-#ifndef packetHandler
-#define packetHandler
+#include <time.h>
 
 #define MAXPACKETSIZE 1024
-#define HEADERSIZE 20
 
 typedef struct Packet {
+    int type; //purpose of packet
     int ack;
     int seq;
-    int retrans;
-    int syn;
-    int fin;
+    struct timespec timer;
     int len;
     char *buf;
 } Packet;
@@ -18,4 +15,3 @@ int sendPacket(int sockfd, struct sockaddr *dest_addr, socklen_t addrlen, Packet
 
 int recvPacket(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, Packet *pkt);
 
-#endif
