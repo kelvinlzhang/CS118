@@ -12,16 +12,41 @@
 
 #include "packethandler.h"
 
+struct PacketInfo{
+	int seqNum;
+	int recvdFlag;
+    char data[MAXPACKETSIZE];
+};
 
+void printSendMsg(int ackNum, int retrFlag, int synFlag, int finFlag)
+{
+	char buffer[70] = "Sending packet";
+	char ackNumBuf[10];
+	sprintf(ackNumBuf," %d", ackNum);
+	strcat(buffer, ackNumBuf);
+
+	if (retrFlag)
+	{
+		strcat(buffer, " Retransmission");
+	}
+	if (synFlag)
+	{
+		strcat(buffer, " SYN");
+	}
+	if (finFlag)
+	{
+		strcat(buffer, " FIN");
+	}
+	printf("%s", buffer);
+}
 
 void printRcvMsg(int seqNum)
 {
 	char buffer[50] = "Receiving packet";
-	char seqNumBuf[10] = " ";
-	sprintf(seqNumBuf, "%d", seqNum);
+	char seqNumBuf[10];
+	sprintf(seqNumBuf, " %d", seqNum);
 	strcat(buffer, seqNumBuf);
 	printf("%s", buffer);	
-
 }
 
 
@@ -31,6 +56,8 @@ int main(int argc, char *argv[])
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
+    char* hostName;
+    int portNum;
 
     int numbytes;
     char buf[MAXPACKETSIZE];
@@ -43,13 +70,14 @@ int main(int argc, char *argv[])
 
     char *port = argv[2];
 
+
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
 
     if ((rv = getaddrinfo(argv[1], port, &hints, &servinfo)) != 0)
     {
-        fprintf(stderr, "ERROR: getaddrinfo");
+        fprintf(stderr, "ERROR: getaddrinfo\n");
         return 1;
     }
 
@@ -57,7 +85,7 @@ int main(int argc, char *argv[])
     {
         if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1);
         {
-            perror("ERROR: socket creation");
+            perror("ERROR: socket creation\n");
             continue;
         }
         break;
@@ -90,6 +118,29 @@ int main(int argc, char *argv[])
         numbytes = recvPacket(sockfd, buf, &len, p->ai_addr, &(p->ai_addrlen), &seq, &ack, &fin);
         buf[numbytes] = '\0';
         printf("Received %d bytes with sequence #%d\n", numbytes, seq);
+
+        //receive packet out of window, needs to be ACKed anyways
+
+        //receive packet
+        //expected sequence number is minimum sequence number?
+        //if rcvd sequence number > (expected sequence number + CWND)
+        	//discard this packet, no ACKs
+        //if rcvd sequence number == expected sequence number
+        	//write to file
+        	//this struct's seqNum += windowsize ????? upcoming packet may not be a full packet
+        	//clear out this struct's buffer
+        	//set this struct to unreceived
+        	//send an ACK packet out
+        //if (rcvd sequence number > expected sequence number) and (rcvd sequence number < (expected sequence number + CWND))
+        	//check if we already have this number buffered (check the struct's received flag)
+        		//send an ACK if so
+        	//if not seen before
+
+
+
+        //numbytes
+
+
 
         numbytes = sendPacket(sockfd, buf, len, p->ai_addr, p->ai_addrlen, seq, seq+len, fin);
         fwrite(buf, 1, len, fp);

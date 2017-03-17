@@ -13,6 +13,7 @@
 #include "packethandler.h"
 
 #define CWND 5120
+#define MAXSEQNUM
 
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -22,17 +23,17 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-void printSendMsg(int seqNum, int wnd, bool retrFlag, bool synFlag, bool finFlag)
+void printSendMsg(int seqNum, int wnd, int retrFlag, int synFlag, int finFlag)
 {
 	char buffer[70] = "Sending packet";
 	//convert int to string for seqNum
-	char seqNumBuf[10]= " ";
-	sprintf(seqNumBuf,"%d", seqNum);
+	char seqNumBuf[10];
+	sprintf(seqNumBuf," %d", seqNum);
 	strcat(buffer,seqNumBuf);
 
 	//convert int to string for wnd
-	char wndNumBuf[10] = " ";
-	sprintf(wndNumBuf, "%d", wnd);
+	char wndNumBuf[10];
+	sprintf(wndNumBuf, " %d", wnd);
 	strcat(buffer, wndNumBuf);
 
 	if (retrFlag)
@@ -55,7 +56,7 @@ void printRcvMsg(int ackNum)
 {
 	char buffer[50] = "Receiving packet";
 	char ackNumBuf[10] = " ";
-	sprintf(ackNumBuf, "%d", ackNum);
+	sprintf(ackNumBuf, " %d", ackNum);
 	strcat(buffer, ackNumBuf);
 	printf("%s", buffer);	
 
@@ -64,6 +65,7 @@ void printRcvMsg(int ackNum)
 
 int main(int argc, char *argv[])
 {
+	printf("Server on\n");
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
@@ -146,11 +148,8 @@ int main(int argc, char *argv[])
         fseek(fp, 0L, SEEK_SET);
 
         file_len = fread(file_data, 1, fsize, fp);
-
-        //int file_sizeToRead = file_len;
-        //while (file_sizeTorRead > MAXPACKETSIZE)
         {
-        	sendPacket(sockfd, buf, strlen(buf), (s))
+        	sendPacket(sockfd, buf, strlen(buf), (struct sockaddr*)&their_addr, addr_len, 0, 0, 1);
         }
         if (file_len == 0)
         {
@@ -162,6 +161,17 @@ int main(int argc, char *argv[])
 
         file_data[file_len] = '\0';
     }
+
+    	//ARRAY OF 5 STRUCTS?
+        //int file_sizeToRead = file_len;
+        //while not at end of file
+            //packet size = MAXPACKETSIZE
+            //if amount of file left is less than MAXPACKETSIZE
+                //set packet size to be amount of file left
+    		// curSeqNum = (add packet size to curSeqNum) mod by MAXSEQNUM
+    		// send packet, start timer
+    		// 
+                
 
     fclose(fp);
 
