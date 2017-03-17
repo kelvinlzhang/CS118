@@ -3,7 +3,7 @@
 #define MAXPACKETSIZE 1024
 
 typedef struct Packet {
-    int type; //purpose of packet
+    int type;
     int ack;
     int seq;
     struct timespec timer;
@@ -11,7 +11,11 @@ typedef struct Packet {
     char *buf;
 } Packet;
 
-int sendPacket(int sockfd, struct sockaddr *dest_addr, socklen_t addrlen, Packet *pkt);
-
-int recvPacket(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, Packet *pkt);
-
+/*
+Types
+0. DATA
+1. ACK
+2. REQUEST
+3. SYN
+4. FIN
+*/
