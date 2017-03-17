@@ -23,6 +23,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(int argc, char *argv[])
 {
+    /*=================SOCKET===================*/
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
@@ -77,70 +78,93 @@ int main(int argc, char *argv[])
     }
 
     freeaddrinfo(servinfo);
-
-    if ((numbytes = recvfrom(sockfd, buf, MAXPACKETSIZE-1 , 0, (struct sockaddr *)&their_addr, &addr_len)) == -1)
-    {
-        perror("ERROR: did not receive filename");
-        exit(1);
+    
+    /*=================SYN===================*/
+    Packet sent_packet, recv_packet;
+    
+    while(1) {
+        memset((char*)&recv_packet, 0, sizeof(recv_packet));
+        if (recvfrom(sockfd, &recv_packet, sizeof(recv_packet), 0,(struct sockaddr *) &their_addr, &addr_len) < 0)
+            perror("ERROR: receiving SYN\n");
+        if (recv_packet.type == 4) //SYN
+            break;
     }
-    buf[numbytes] = '\0';
-    printf("Requested filename: %s\n", buf);
+    
+    fprintf("Received packet %d\n" recv_packet.ack);
+    memset((char*)&sent_packet, 0, sizeof(sent_packet));
+    sent_packet.type = 2; //ACK
+    sent_packet.seq = 0;
+    sent_packet.ack = 1;
+    if(sendto(sockfd, &sent_packet, sizeof(sent_packet), 0, (struct sockaddr *)&their_addr, &addr_len) == -1)
+        perror("ERROR: sending SYN-ACK.\n");
+    fprintf(stdout, "Sending packet 0 5120 SYN\n");
 
-    char *file_data = NULL;
-    FILE *fp = fopen(buf, "r");
-    size_t file_len;
-
-    Packet errorPacket = {0, 0, 0, 0, 1, 0, NULL};
-
-    if (fp==NULL)
+    struct timeval timeout = {0, 50000};
+    struct packet** timed_packets = malloc(5*sizeof(struct packet*));
+    
+    while(1)
     {
-        sendPacket(sockfd, (struct sockaddr *)&their_addr, addr_len, &errorPacket);
-        printf("ERROR: file not found!\n");
-        exit(1);
-    }
-
-    if (fseek(fp, 0L, SEEK_END) == 0)
-    {
-        long fsize = ftell(fp);
-        file_data = malloc(fsize + 1);
-
-        fseek(fp, 0L, SEEK_SET);
-
-        file_len = fread(file_data, 1, fsize, fp);
+        /*=================REQUEST===================*/
+        memset((char*)&recv_packet, 0, sizeof(recv_packet));
+        if (recvfrom(sockfd, &recv_packet, sizeof(recv_packet), 0, (struct sockaddr *)&their_addr, &addr_len) < 0)
         {
-            sendPacket(sockfd, (struct sockaddr *)&their_addr, addr_len, &errorPacket);
+            perror("ERROR: did not receive filename");
+            exit(1);
         }
-        if (file_len == 0)
+        
+        if (recv_packet.type == 0 && recv_packet.ack == -1)
+            filename = recv_packet.data;
+        
+        printf("Requested filename: %s\n", filename);
+
+        char *file_data = NULL;
+        FILE *fp = fopen(buf, "r");
+        size_t file_len;
+
+        if (fp==NULL)
         {
-            sendPacket(sockfd, (struct sockaddr *)&their_addr, addr_len, &errorPacket);
-            free(file_data);
-            printf("ERROR: could not read file\n");
+            printf("ERROR: file not found!\n");
             exit(1);
         }
 
-        file_data[file_len] = '\0';
-    }
+        fseek(fp, 0L, SEEK_END);
+        long file_len= ftell(fp);
+        fseek(fp, 0L, SEEK_SET);
 
-    fclose(fp);
+        file_data = malloc(fsize + 1);
+        fread(file_data, 1, fsize, fp);
 
-    int seq = 0;
-    int ack = 0;
-    int len = 0;
-    int fin = 0;
-    int next_ack = 0;
-    int bytes_sent = 0;
-    int index = 0;
+        fclose(fp);
+        
+        /*=================DATA TRANSFER===================*/
 
-    /*
-    while (fin != 1)
-    {
-        while (index < file_len && bytes_sent < CWND)
+        int total_packets = file_len/1024 + (file_len % 1024 != 0);
+        int packet = 0;
+        int seq = 0;
+        int file_pos = 0;
+
+        while (packet < total_packets)
         {
+            int num_sent = 0;
+            int index = 0;
+            while (num_sent <= 4 && file_pos < file_len)
+            {
+                memset((char*)&sent_packet, 0, sizeof(sent_packet));
+                
+            }
 
+            int num_acked = 0;
+            struct time_spec rto = {0,500};
+
+            while (num_acked < num_sent)
+            {
+
+            }
         }
+        
+        /*=================FIN===================*/
     }
-    */
-
+    
     close(sockfd);
     return 0;
 }
