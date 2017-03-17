@@ -5,8 +5,8 @@
 #define HEADERSIZE 20
 
 typedef struct Packet {
-    int ackNum;
-    int seqNum;
+    int ack;
+    int seq;
     int retrans;
     int syn;
     int fin;

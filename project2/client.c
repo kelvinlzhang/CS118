@@ -12,51 +12,11 @@
 
 #include "packethandler.h"
 
-struct PacketInfo{
-	int seqNum;
-	int recvdFlag;
-    char data[MAXPACKETSIZE];
-};
-
-void printSendMsg(int ackNum, int retrFlag, int synFlag, int finFlag)
-{
-	char buffer[70] = "Sending packet";
-	char ackNumBuf[10];
-	sprintf(ackNumBuf," %d", ackNum);
-	strcat(buffer, ackNumBuf);
-
-	if (retrFlag)
-	{
-		strcat(buffer, " Retransmission");
-	}
-	if (synFlag)
-	{
-		strcat(buffer, " SYN");
-	}
-	if (finFlag)
-	{
-		strcat(buffer, " FIN");
-	}
-	printf("%s", buffer);
-}
-
-void printRcvMsg(int seqNum)
-{
-	char buffer[50] = "Receiving packet";
-	char seqNumBuf[10];
-	sprintf(seqNumBuf, " %d", seqNum);
-	strcat(buffer, seqNumBuf);
-	printf("%s", buffer);	
-}
-
-
-
 int main(int argc, char *argv[])
 {
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    char* hostName;
     int portNum;
 
     int numbytes;
@@ -69,7 +29,7 @@ int main(int argc, char *argv[])
     }
 
     char *port = argv[2];
-
+    portNum = atoi(port);
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -83,7 +43,7 @@ int main(int argc, char *argv[])
 
     for(p = servinfo; p != NULL; p = p->ai_next)
     {
-        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1);
+        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
         {
             perror("ERROR: socket creation\n");
             continue;
@@ -105,23 +65,30 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(servinfo);
 
-    int seq = 0;
-    int ack = 0;
-    int len = 0;
-    int fin = 0;
+
+    Packet pkt = {0, 0, 0, 0, 0, 0, ""};
     int next_seq = 0;
 
     FILE *fp = fopen("received.data", "w+");
 
+    //SYN
+    //need timer
+
+    //ACK (to follow servers SYN ACK)
+    //array of pre window pckts (seqNum, ackNum)
+
+
+    int fin = 0;
     while (fin != 1)
     {
-        numbytes = recvPacket(sockfd, buf, &len, p->ai_addr, &(p->ai_addrlen), &seq, &ack, &fin);
+    	numbytes = recvPacket(sockfd, p->ai_addr, &(p->ai_addrlen), &pkt);
         buf[numbytes] = '\0';
-        printf("Received %d bytes with sequence #%d\n", numbytes, seq);
+        printf("Received %d bytes with sequence #%d\n", numbytes, pkt.seq);
 
-        //receive packet out of window, needs to be ACKed anyways
+        //save an array of the past 5 pre-window packets
 
         //receive packet
+        //if packet is 
         //expected sequence number is minimum sequence number?
         //if rcvd sequence number > (expected sequence number + CWND)
         	//discard this packet, no ACKs
@@ -142,9 +109,9 @@ int main(int argc, char *argv[])
 
 
 
-        numbytes = sendPacket(sockfd, buf, len, p->ai_addr, p->ai_addrlen, seq, seq+len, fin);
-        fwrite(buf, 1, len, fp);
-        printf("Sent ACK #%d\n", seq+len);
+        numbytes = sendPacket(sockfd, p->ai_addr, p->ai_addrlen, &pkt);
+        fwrite(buf, 1, pkt.len, fp);
+        printf("Sent ACK #%d\n", pkt.seq + pkt.len);
         next_seq += MAXPACKETSIZE;
     }
 
