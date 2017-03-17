@@ -36,9 +36,9 @@ int sendPacket(int sockfd, struct sockaddr *dest_addr, socklen_t addrlen, Packet
 int recvPacket(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, Packet *pkt)
 {
     char temp[MAXPACKETSIZE];
-    bzero(pkt->buf, MAXPACKETSIZE);
+    bzero(pkt->buf, strlen(pkt->buf));
 
-    int byteRecv = recvfrom(sockfd, temp, HEADERSIZE + MAXPACKETSIZE, 0, src_addr, addrlen);
+    int byteRecv = recvfrom(sockfd, temp, MAXPACKETSIZE, 0, src_addr, addrlen);
 
     memcpy(&(pkt->seq), temp, sizeof(int));
     memcpy(&(pkt->ack), temp+4, sizeof(int));

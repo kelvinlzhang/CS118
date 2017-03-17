@@ -11,6 +11,7 @@
 #include <time.h>
 
 #include "packethandler.h"
+#include "vector.h"
 
 #define CWND 5120
 #define MAXSEQNUM
@@ -92,7 +93,7 @@ int main(int argc, char *argv[])
     FILE *fp = fopen(buf, "r");
     size_t file_len;
 
-    Packet errorPacket = {0, 0, 0, 0, 1, 0};
+    Packet errorPacket = {0, 0, 0, 0, 1, 0, NULL};
 
     if (fp==NULL)
     {
@@ -123,17 +124,6 @@ int main(int argc, char *argv[])
         file_data[file_len] = '\0';
     }
 
-    	//ARRAY OF 5 STRUCTS?
-        //int file_sizeToRead = file_len;
-        //while not at end of file
-            //packet size = MAXPACKETSIZE
-            //if amount of file left is less than MAXPACKETSIZE
-                //set packet size to be amount of file left
-    		// curSeqNum = (add packet size to curSeqNum) mod by MAXSEQNUM
-    		// send packet, start timer
-    		//
-
-
     fclose(fp);
 
     int seq = 0;
@@ -144,6 +134,7 @@ int main(int argc, char *argv[])
     int bytes_sent = 0;
     int index = 0;
 
+    /*
     while (fin != 1)
     {
         while (index < file_len && bytes_sent < CWND)
@@ -151,6 +142,7 @@ int main(int argc, char *argv[])
 
         }
     }
+    */
 
     close(sockfd);
     return 0;
