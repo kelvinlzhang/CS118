@@ -13,9 +13,6 @@
 #include "packethandler.h"
 #include "vector.h"
 
-#define CWND 5120
-#define MAXSEQNUM
-
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {
