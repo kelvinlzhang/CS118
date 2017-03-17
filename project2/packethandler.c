@@ -11,18 +11,31 @@
 
 #include "packethandler.h"
 
-int sendPacket(int sockfd, char *buf, int len, struct sockaddr *dest_addr, socklen_t addrlen, int seq, int ack, int fin)
-{
-    char* temp = malloc(HEADERSIZE + len);
-    bzero(temp, HEADERSIZE + len);
-    
-    memcpy(temp, &seq, sizeof(int));
-    memcpy(temp+4, &ack, sizeof(int));
-    memcpy(temp+8, &fin, sizeof(int));
-    memcpy(temp+12, &len, sizeof(int));
-    memcpy(temp+16, buf, len);
+struct Packet {
+    int ackNum;
+    int seqNum;
+    int retrans;
+    int syn;
+    int fin;
+    int len;
+    char *buf;
+};
 
-    int byteSent = sendto(sockfd, temp, HEADERSIZE + len, 0, dest_addr, addrlen);
+
+//char *buf, int len,  int seq, int ack, int fin
+int sendPacket(int sockfd, struct sockaddr *dest_addr, socklen_t addrlen, Packet *pkt)
+{
+    char* temp = malloc(HEADERSIZE + pkt->len);
+    bzero(temp, HEADERSIZE + pkt->len);
+    
+    memcpy(temp, pkt->seqNum, sizeof(int));
+    memcpy(temp+4, pkt->ackNum, sizeof(int));
+    memcpy(temp+8, pkt->fin, sizeof(int));
+    memcpy(temp+12, pkt->len, sizeof(int));
+    memcpy(temp+16, pkt->syn, sizeof(int));
+    memcpy(temp+20, pkt->buf, pkt->len);
+
+    int byteSent = sendto(sockfd, temp, HEADERSIZE + pkt->len, 0, dest_addr, addrlen);
 
     free(temp);
 
@@ -30,29 +43,21 @@ int sendPacket(int sockfd, char *buf, int len, struct sockaddr *dest_addr, sockl
 }
 
 
-int recvPacket(int sockfd, char *buf, int *len, struct sockaddr *src_addr, socklen_t *addrlen, int *seq, int *ack, int *fin)
+int recvPacket(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, Packet *pkt)
 {
     char temp[MAXPACKETSIZE];
-    bzero(buf, MAXPACKETSIZE);
+    bzero(pkt->buf, MAXPACKETSIZE);
 
     int byteRecv = recvfrom(sockfd, temp, HEADERSIZE + MAXPACKETSIZE, 0, src_addr, addrlen);
 
-    memcpy(seq, temp, sizeof(int));
-    memcpy(ack, temp+4, sizeof(int));
-    memcpy(fin, temp+8, sizeof(int));
-    memcpy(len, temp+12, sizeof(int));
-    memcpy(buf, temp+16, MAXPACKETSIZE-HEADERSIZE);
+    memcpy(pkt->seq, temp, sizeof(int));
+    memcpy(pkt->ack, temp+4, sizeof(int));
+    memcpy(pkt->fin, temp+8, sizeof(int));
+    memcpy(pkt->len, temp+12, sizeof(int));
+    memcpy(pkt->syn, temp+16, sizeof(int));
+    memcpy(pkt->buf, temp+20, MAXPACKETSIZE-HEADERSIZE);
 
     return byteRecv;
 }
 
 
-struct Packet {
-    int ackNum;
-    int seqNum;
-    int retrFlag;
-    int synFlag;
-    int finFlag;
-    int size;
-    char data[MAXPACKETSIZE];
-};

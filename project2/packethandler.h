@@ -2,10 +2,10 @@
 #define packetHandler
 
 #define MAXPACKETSIZE 1024
-#define HEADERSIZE 16
+#define HEADERSIZE 20
 
-int sendPacket(int sockfd, char *buf, int len, struct sockaddr *dest_addr, socklen_t addrlen, int seq, int ack, int fin);
+int sendPacket(int sockfd, struct sockaddr *dest_addr, socklen_t addrlen, Packet *pkt);
 
-int recvPacket(int sockfd, char *buf, int *len, struct sockaddr *src_addr, socklen_t *addrlen, int *seq, int *ack, int *fin);
+int recvPacket(int sockfd, struct sockaddr *src_addr, socklen_t *addrlen, Packet *pkt);
 
 #endif
