@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
         {
             if(recvd.type == 1 && recvd.ack == 1)
             {
-                printf("Receiving packet SYNACK\n");
+                printf("Receiving packet %d\n", recvd.seq);
                 break;
             }
         }
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
         {
             perror("ERROR: sending syn\n");
         }
-        printf("Sending packet SYN Retransmission\n");
+        printf("Sending packet %d SYN Retransmission\n", recvd.ack);
         
         //SYN ACK should be ACK and ack 1
  	}
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
     {
         perror("ERROR: failed to send filename \n");
     }
-    printf("Sending request packet for filename: %s\n", filename);
+    printf("Sending packet %d\n", request.ack);
 
     //buffer window of Packet pointers 
     int numPkts = 5;
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
     	//SYNACK type 1 just found, send request with filename
     	if((recvd.type == 1) && (recvd.ack == 0))
     	{
-    		printf("Attempting to retransmit filename request\n");
+    		printf("Receiving packet %d\n", recvd.seq);
     		if(sendto(sockfd, &request, sizeof(request), 0, p->ai_addr, p->ai_addrlen) == -1)
     		{
     			perror("ERROR: failed to resend filename\n");
@@ -168,14 +168,14 @@ int main(int argc, char *argv[])
     	//FIN received, type 4
     	if (recvd.type == 4)
     	{
-    		printf("Receiving packet FIN\n");
+    		printf("Receiving packet %d FIN\n", recvd.seq);
     		break;
     	}
     	// printf("Fourth\n");
     	//DATA received, type 0
     	if(recvd.type == 0)
     	{
-    		printf("Packet #%d\n", recvd.seq);
+    		printf("Receiving packet %d\n", recvd.seq);
     		int min = expectedSeq;
     		int max = expectedSeq + 4*MAXPACKETSIZE;
     		int prevMin;
@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
     		{
     			perror("ERROR: failed to send ACK\n");
     		}
-    		printf("Sending ACK#%d\n", ack.ack);
+    		printf("Sending packet %d\n", ack.ack);
     	}
 
 
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
     {
     	perror("ERROR: failed to send FIN ACK\n");
     }
-    printf("Sending FINACK#%d\n", finAck.ack);
+    printf("Sending packet %d FIN\n", finAck.ack);
     printf("Connection closed\n");
 
 
