@@ -192,7 +192,8 @@ int main(int argc, char *argv[])
             {
                 struct timespec master_timer;
                 clock_gettime(CLOCK_REALTIME, &master_timer); //timestamp of present time
-                for (int i = 0; i < 5; i++)
+                int i;
+                for (i = 0; i < 5; i++)
                 {
                     if (timed_packets[i] != NULL)
                     {
@@ -229,15 +230,16 @@ int main(int argc, char *argv[])
                         num_sent--;
                     }
                     
-                    for (int i = 0; i < vector_total(&waiting_packets); i++)
+                    int i;
+                    for (i = 0; i < vector_total(&waiting_packets); i++)
                     {
                         if (((Packet *)vector_get(&waiting_packets, i))->seq + ((Packet *)vector_get(&waiting_packets, i))->len == recv_packet.ack)
                             ((Packet *)vector_get(&waiting_packets, i))->ack = -1;
                     }
                     
-                    for (int i = 0; i < 5; i++)
+                    for (i = 0; i < 5; i++)
                     {
-                        if (timed_packets[i]->seq == recv_packet.ack)
+                        if (timed_packets[i]->seq + timed_packets[i]->len == recv_packet.ack)
                             timed_packets[i] = NULL;
                     }
                 }
@@ -266,6 +268,7 @@ int main(int argc, char *argv[])
         
         sleep(500);
         fprintf(stdout, "Connection closed\n");
+        break;
     }
     
     close(sockfd);
