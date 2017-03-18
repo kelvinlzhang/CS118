@@ -1,101 +1,71 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "vector.h"
 
 void vector_init(vector *v)
 {
-    v->data = NULL;
-    v->size = 0;
-    v->count = 0;
+    v->capacity = VECTOR_INIT_CAPACITY;
+    v->total = 0;
+    v->items = malloc(sizeof(void *) * v->capacity);
 }
 
-int vector_count(vector *v)
+int vector_total(vector *v)
 {
-    return v->count;
+    return v->total;
 }
 
-void vector_add(vector *v, void *e)
+static void vector_resize(vector *v, int capacity)
 {
-    if (v->size == 0) {
-        v->size = 10;
-        v->data = malloc(sizeof(void*) * v->size);
-        memset(v->data, '\0', sizeof(void*) * v->size);
+#ifdef DEBUG_ON
+    printf("vector_resize: %d to %d\n", v->capacity, capacity);
+#endif
+    
+    void **items = realloc(v->items, sizeof(void *) * capacity);
+    if (items) {
+        v->items = items;
+        v->capacity = capacity;
     }
-
-    if (v->size == v->count) {
-        v->size *= 2;
-        v->data = realloc(v->data, sizeof(void*) * v->size);
-    }
-
-    v->data[v->count] = e;
-    v->count++;
 }
 
-void vector_set(vector *v, int index, void *e)
+void vector_add(vector *v, void *item)
 {
-    if (index >= v->count) {
-        return;
-    }
+    if (v->capacity == v->total)
+        vector_resize(v, v->capacity * 2);
+    v->items[v->total++] = item;
+}
 
-    v->data[index] = e;
+void vector_set(vector *v, int index, void *item)
+{
+    if (index >= 0 && index < v->total)
+        v->items[index] = item;
 }
 
 void *vector_get(vector *v, int index)
 {
-    if (index >= v->count) {
-        return NULL;
-    }
-
-    return v->data[index];
+    if (index >= 0 && index < v->total)
+        return v->items[index];
+    return NULL;
 }
 
 void vector_delete(vector *v, int index)
 {
-    if (index >= v->count) {
+    if (index < 0 || index >= v->total)
         return;
+    
+    int i, j;
+    for (i = index+i; j = index; i < v->total; i++) {
+        v->items[j] = v->items[i];
+        ++j;
     }
-
-    for (int i = index, j = index; i < v->count; i++) {
-        v->data[j] = v->data[i];
-        j++;
-    }
-
-    v->count--;
+    
+    v->total--;
+    
+    if (v->total > 0 && v->total == v->capacity / 4)
+        vector_resize(v, v->capacity / 2);
 }
 
 void vector_free(vector *v)
 {
-    free(v->data);
+    free(v->items);
 }
-
-// int main(void)
-// {
-//     vector v;
-//     vector_init(&v);
-
-//     vector_add(&v, "emil");
-//     vector_add(&v, "hannes");
-//     vector_add(&v, "lydia");
-//     vector_add(&v, "olle");
-//     vector_add(&v, "erik");
-
-//     int i;
-//     printf("first round:\n");
-//     for (i = 0; i < vector_count(&v); i++) {
-//         printf("%s\n", (char*)vector_get(&v, i));
-//     }
-
-//     vector_delete(&v, 1);
-//     vector_delete(&v, 3);
-
-//     printf("second round:\n");
-//     for (i = 0; i < vector_count(&v); i++) {
-//         printf("%s\n", (char*)vector_get(&v, i));
-//     }
-
-//     vector_free(&v);
-
-//     return 0;
-// }

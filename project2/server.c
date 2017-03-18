@@ -86,21 +86,21 @@ int main(int argc, char *argv[])
         memset((char*)&recv_packet, 0, sizeof(recv_packet));
         if (recvfrom(sockfd, &recv_packet, sizeof(recv_packet), 0,(struct sockaddr *) &their_addr, &addr_len) < 0)
             perror("ERROR: receiving SYN\n");
-        if (recv_packet.type == 4) //SYN
+        if (recv_packet.type == 3)
             break;
     }
     
     fprintf("Received packet %d\n" recv_packet.ack);
     memset((char*)&sent_packet, 0, sizeof(sent_packet));
-    sent_packet.type = 2; //ACK
+    sent_packet.type = 1; //ACK
     sent_packet.seq = 0;
     sent_packet.ack = 1;
     if(sendto(sockfd, &sent_packet, sizeof(sent_packet), 0, (struct sockaddr *)&their_addr, &addr_len) == -1)
         perror("ERROR: sending SYN-ACK.\n");
     fprintf(stdout, "Sending packet 0 5120 SYN\n");
 
-    struct timeval timeout = {0, 50000};
-    struct packet** timed_packets = malloc(5*sizeof(struct packet*));
+    struct timeval rto = {0, 50000};
+    Packet** timed_packets = malloc(5*sizeof(Packet*));
     
     while(1)
     {
@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
             exit(1);
         }
         
-        if (recv_packet.type == 0 && recv_packet.ack == -1)
-            filename = recv_packet.data;
+        if (recv_packet.type == 2)
+            filename = recv_packet.buf;
         
         printf("Requested filename: %s\n", filename);
 
@@ -149,12 +149,23 @@ int main(int argc, char *argv[])
             int index = 0;
             while (num_sent <= 4 && file_pos < file_len)
             {
+                //construct packet
                 memset((char*)&sent_packet, 0, sizeof(sent_packet));
+                sent_packet.type = 0;
+                sent_packet.seq = seq;
+                if (file_len - file_pos < 1024)
+                    sent_packet.len = file_len - file_pos;
+                else
+                    sent_packet.len = 1024;
+                memcpy(sent_packet.buf, file_data + file_pos, sent_packet.size);
+                
+                //dynamically add associated timer
+                Packet* timer = malloc(sizeof(struct packet));
+                
                 
             }
 
             int num_acked = 0;
-            struct time_spec rto = {0,500};
 
             while (num_acked < num_sent)
             {
