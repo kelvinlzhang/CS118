@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
             break;
     }
     
-    fprintf(stdout, "Received packet %d\n", recv_packet.ack);
+    fprintf(stdout, "Received packet SYN\n");
     memset((char*)&sent_packet, 0, sizeof(sent_packet));
     sent_packet.type = 1; //ACK
     sent_packet.seq = 0;
@@ -159,7 +159,6 @@ int main(int argc, char *argv[])
                 index++;
                 file_pos += sent_packet.len;
                 seq = seq % 30720 + sent_packet.len;
-                //fprintf(stderr, "end of send loop iteration packet: %d num_sent: %d index: %d file_pos: %d seq: %d sent_packet.len: %d total_packets: %d file_len: %d", packet, num_sent, index, file_pos, seq, sent_packet.len, total_packets, (int) file_len);
             }
 
             int num_acked = 0;
@@ -194,15 +193,6 @@ int main(int argc, char *argv[])
                 {
                     fprintf(stdout, "Receiving packet %d\n", recv_packet.ack);
                     
-                    /*
-                    Packet* first_packet = (Packet *) vector_get(&waiting_packets, 0);
-                    int first_expected_ack = first_packet->seq +first_packet->len;
-                    
-                    if (first_expected_ack == recv_packet.ack)
-                        ((Packet *)vector_get(&waiting_packets, 0))->ack = -1;
-                    */
-                    
-                    
                     int i;
                     
                     for (i = 0; i < 5; i++)
@@ -213,16 +203,6 @@ int main(int argc, char *argv[])
                             num_sent--;
                         }
                     }
-                    
-                    /*
-                    while (first_expected_ack == recv_packet.ack && first_packet->ack == -1)
-                    {
-                        vector_delete(&waiting_packets, 0);
-                        num_sent--;
-                    }
-                    
-                    perror("mark 1\n");
-                    */
                     
                     for (i = 0; i < vector_total(&waiting_packets); i++)
                     {
