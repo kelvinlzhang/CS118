@@ -12,7 +12,7 @@ typedef struct Packet {
     int seq;
     struct timespec timer;
     int len;
-    char *buf;
+    char buf[1024];
 } Packet;
 
 /*

@@ -64,53 +64,67 @@ int main(int argc, char *argv[])
 
     FILE *fp = fopen("received.data", "w+");
 
+    struct timeval rto = {0, 50000};
 
+    
+    
+    
     // SYN: type 3 , ack 0, seq 0, timer 0, len 0, buf ""
     Packet syn = { 3, 0, 0, {0,500000}, 0, ""}; //figure out the type
     if((numbytes = sendto(sockfd, &syn, sizeof(syn), 0, p->ai_addr, p->ai_addrlen)) == -1)
     {
     	perror("ERROR: sending syn\n");
     }
-    printf("Sending SYN\n");
+    printf("Sending packet SYN\n");
 
-    Packet recvd = {0, 0, 0, {0,500000}, 0, ""};
-    //receive server's SYNACK
- 	struct timespec SYNACKtimer = {3,0};
- 	fd_set rdSet;
- 	while(1) {
- 		FD_ZERO(&rdSet);
- 		FD_SET(sockfd, &rdSet);
- 		if ((select(sockfd+1, &rdSet, NULL, NULL, &SYNACKtimer)) == -1)
-		{
-			perror("ERROR: determining select status\n");
-		} else if (FD_ISSET(sockfd, &rdSet) != 1)
-		{
-			continue;
-		}
-			if(recvfrom(sockfd, &recvd, sizeof(recvd), 0, p->ai_addr, &(p->ai_addrlen)) == -1)
-			{
-				perror("ERROR: failed to receive SYN ACK\n");
-			}
-			//SYN ACK should be ACK and ack 1
-			if(recvd.type == 2 && recvd.ack == 1)
-			{
-				printf("Received SYNACK\n");
-			}
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &rto, sizeof(rto)) < 0)
+        perror("ERROR: socket timeout");
+    
+    Packet recvd, request;
 
+    while(1) {
+        if(recvfrom(sockfd, &recvd, sizeof(recvd), 0, p->ai_addr, &(p->ai_addrlen)) == -1)
+            perror("ERROR: failed to receive SYN ACK\n");
+        else
+        {
+            if(recvd.type == 1 && recvd.ack == 1)
+            {
+                printf("Receiving packet SYNACK\n");
+                break;
+            }
+        }
+    
+        if((numbytes = sendto(sockfd, &syn, sizeof(syn), 0, p->ai_addr, p->ai_addrlen)) == -1)
+        {
+            perror("ERROR: sending syn\n");
+        }
+        printf("Sending packet SYN Retransmission\n");
+        
+        //SYN ACK should be ACK and ack 1
  	}
+    
+    
+    struct timeval data_wait = {1000000, 0};
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &data_wait, sizeof(data_wait)) < 0)
+        perror("ERROR: socket timeout");
 
-
-
+    
     //REQUEST (to respond to server's SYN ACK)
     //REQUEST:type 2 , ack, seq, timer, len, buf
     
-    Packet request = { 2, 0, 0, {0,500000}, 0, argv[3]}; //figure out type
-    request.buf = argv[3];
+    
+    filename = argv[3];
+    request.type = 2; //figure out type
+    request.seq = 0;
+    request.ack = 0;
+    request.len = strlen(filename);
+    strcpy(request.buf, filename);
+    
 	if((numbytes = sendto(sockfd, &request, sizeof(request), 0, p->ai_addr, p->ai_addrlen) == -1))
     {
-        perror("ERROR: failed to send filename\n");
+        perror("ERROR: failed to send filename \n");
     }
-    printf("Sending request packet\n");
+    printf("Sending request packet for filename: %s\n", filename);
 
     //buffer window of Packet pointers 
     int numPkts = 5;
@@ -149,7 +163,7 @@ int main(int argc, char *argv[])
     	//FIN received, type 4
     	if (recvd.type == 4)
     	{
-    		printf("FIN received\n");
+    		printf("Receiving packet FIN\n");
     		break;
     	}
     	//DATA received, type 0

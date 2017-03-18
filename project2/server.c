@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     sent_packet.ack = 1;
     if(sendto(sockfd, &sent_packet, sizeof(sent_packet), 0, (struct sockaddr *)&their_addr, addr_len) == -1)
         perror("ERROR: sending SYN-ACK.\n");
-    fprintf(stdout, "Sending packet 0 5120 SYN\n");
+    fprintf(stdout, "Sending packet SYN-ACK\n");
 
     struct timeval rto = {0, 50000};
     Packet** timed_packets = malloc(5*sizeof(Packet*));
@@ -82,19 +82,19 @@ int main(int argc, char *argv[])
         char* filename;
         
         memset((char*)&recv_packet, 0, sizeof(recv_packet));
+        
         if (recvfrom(sockfd, &recv_packet, sizeof(recv_packet), 0, (struct sockaddr *)&their_addr, &addr_len) < 0)
         {
             perror("ERROR: did not receive filename");
             exit(1);
         }
         
+        
         if (recv_packet.type == 2)
             filename = recv_packet.buf;
-        
-        printf("Requested filename: %s\n", filename);
 
         char *file_data = NULL;
-        FILE *fp = fopen(buf, "r");
+        FILE *fp = fopen(filename, "rb");
 
         if (fp==NULL)
         {
@@ -127,6 +127,7 @@ int main(int argc, char *argv[])
             int index = 0;
             while (num_sent <= 4 && file_pos < file_len)
             {
+                perror("inside send loop\n");
                 //construct packet
                 memset((char*)&sent_packet, 0, sizeof(sent_packet));
                 sent_packet.type = 0;
@@ -158,6 +159,7 @@ int main(int argc, char *argv[])
                 index++;
                 file_pos += 1024;
                 seq = seq % 30720 + sent_packet.len;
+                fprintf(stderr, "end of send loop iteration packet: %d num_sent: %d index: %d file_pos: %d seq: %d sent_packet.len: %d", packet, num_sent, index, file_pos, seq, sent_packet.len);
             }
 
             int num_acked = 0;
@@ -186,7 +188,7 @@ int main(int argc, char *argv[])
                     perror("ERROR: socket timeout");
                 memset((char*)&recv_packet, 0, sizeof(recv_packet));
                 if (recvfrom(sockfd, &recv_packet, sizeof(recv_packet), 0,(struct sockaddr *) &their_addr, &addr_len) < 0)
-                    fprintf(stdout,"ERROR: receiving packet\n");
+                    fprintf(stderr,"ERROR: receiving packet\n");
                 
                 if (recv_packet.type == 1)
                 {
