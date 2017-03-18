@@ -1,6 +1,9 @@
 #include <time.h>
 
 #define MAXPACKETSIZE 1024
+#define CWND 5120
+#define MAXSEQNUM 30720
+#define RTO 500
 
 typedef struct Packet {
     int type;
