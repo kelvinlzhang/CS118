@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 
     //int fin = 0;
 
-    int expectedSeq;
+    int expectedSeq = 0;
     //connection open
     while (1)
     {
