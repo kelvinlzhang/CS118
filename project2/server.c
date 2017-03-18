@@ -159,14 +159,13 @@ int main(int argc, char *argv[])
                 index++;
                 file_pos += sent_packet.len;
                 seq = seq % 30720 + sent_packet.len;
-                fprintf(stderr, "end of send loop iteration packet: %d num_sent: %d index: %d file_pos: %d seq: %d sent_packet.len: %d total_packets: %d file_len: %d", packet, num_sent, index, file_pos, seq, sent_packet.len, total_packets, (int) file_len);
+                //fprintf(stderr, "end of send loop iteration packet: %d num_sent: %d index: %d file_pos: %d seq: %d sent_packet.len: %d total_packets: %d file_len: %d", packet, num_sent, index, file_pos, seq, sent_packet.len, total_packets, (int) file_len);
             }
 
             int num_acked = 0;
 
             while (num_acked < num_sent)
             {
-                perror("inside ack check loop\n");
                 struct timespec master_timer;
                 clock_gettime(CLOCK_REALTIME, &master_timer); //timestamp of present time
                 int i;
@@ -258,12 +257,12 @@ int main(int argc, char *argv[])
                 perror("ERROR: receiving FIN-ACK\n");
             if (recv_packet.type == 1)
             {
-                printf("Receiving packet %d\n", recv_packet.ack);
+                printf("Receiving packet FIN-ACK\n");
                 break;
             }
         }
         
-        sleep(500);
+        sleep(1);
         fprintf(stdout, "Connection closed\n");
         break;
     }
