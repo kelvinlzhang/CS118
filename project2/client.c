@@ -12,12 +12,14 @@
 
 #include "packethandler.h"
 
+//sendto(sockfd, temp, HEADERSIZE + pkt->len, 0, dest_addr, addrlen);
+//recvfrom(sockfd, temp, MAXPACKETSIZE, 0, src_addr, addrlen);
+
 int main(int argc, char *argv[])
 {
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
-    int portNum;
 
     int numbytes;
     char buf[MAXPACKETSIZE];
@@ -29,7 +31,8 @@ int main(int argc, char *argv[])
     }
 
     char *port = argv[2];
-    portNum = atoi(port);
+
+    char *filename = argv[3];
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -57,35 +60,69 @@ int main(int argc, char *argv[])
         return 2;
     }
 
-    if ((numbytes = sendto(sockfd, argv[3], strlen(argv[3]), 0, p->ai_addr, p->ai_addrlen)) == -1)
-    {
-        perror("ERROR: failed to send filename\n");
-        exit(1);
-    }
-
     freeaddrinfo(servinfo);
-
-
-    Packet pkt = {0, 0, 0, 0, 0, 0, ""};
-    int next_seq = 0;
 
     FILE *fp = fopen("received.data", "w+");
 
-    //SYN
-    //need timer
 
-    //ACK (to follow servers SYN ACK)
-    //array of pre window pckts (seqNum, ackNum)
+    // // SYN: type 3, ack 0, seq 0, timer, retrans 0, len 0, buf """
+    // Packet syn = { 3, 0, 0, {0,500000}, 0, 0, ""}; //figure out the type
+    // if((numbytes = sendto(sockfd, &syn, HEADERSIZE + syn.len, 0, p->ai_addr, &(p->ai_addrlen))) == -1)
+    // {
+    // 	perror("ERROR: sending syn\n");
+    // }
 
+    // //receive server's SYNACK
+    // //need timer
+    //has an ack of -1?
+
+
+    // //REQUEST (to respond to server's SYN ACK)
+    // // REQUEST: type 2, ack 0, seq 0, timer, retrans 0, len 0, buf """
+     // if ((numbytes = sendto(sockfd, argv[3], strlen(argv[3]), 0, p->ai_addr, p->ai_addrlen)) == -1)
+   
+	   
+    Packet request = { 2, 0, 0, {0,500000}, 0, argv[3]}; //figure out type
+	if((numbytes = sendto(sockfd, &request, sizeof(request), 0, p->ai_addr, p->ai_addrlen) == -1))
+    {
+        perror("ERROR: failed to send filename\n");
+    }
+
+
+
+    //buffer window of Packet pointers 
+    int numPkts = 5;
+    int bufferFilled = 0;
+    Packet** buffer = malloc(numPkts*sizeof(struct Packet*));
+    int i = 0;
+    while(i < numPkts)
+    {
+    	buffer[i]  = NULL;
+    }
+	//type, ack, seq, retrans, len, buf
+    Packet pkt = {0, 0, 0, {0,500000}, 0, ""};
+    int nextSeq = 0;
 
     int fin = 0;
     while (fin != 1)
     {
-    	numbytes = recvPacket(sockfd, p->ai_addr, &(p->ai_addrlen), &pkt);
+    	printf("before\n");
+    	numbytes = recvfrom(sockfd, &pkt, MAXPACKETSIZE, 0, p->ai_addr, &(p->ai_addrlen));
+    	printf("made it\n");
+    	printf("%s/n", pkt.buf);
+        
         buf[numbytes] = '\0';
         printf("Received %d bytes with sequence #%d\n", numbytes, pkt.seq);
 
+
+        fwrite(buf, sizeof(char), pkt.len, fp);
         //save an array of the past 5 pre-window packets
+
+        // Packet *prev[5] = {};
+
+
+
+
 
         //receive packet
         //if packet is 
@@ -107,12 +144,10 @@ int main(int argc, char *argv[])
 
         //numbytes
 
-
-
-        numbytes = sendPacket(sockfd, p->ai_addr, p->ai_addrlen, &pkt);
+        numbytes = sendto(sockfd, &pkt, sizeof(pkt), 0, p->ai_addr, p->ai_addrlen);
         fwrite(buf, 1, pkt.len, fp);
         printf("Sent ACK #%d\n", pkt.seq + pkt.len);
-        next_seq += MAXPACKETSIZE;
+        nextSeq += MAXPACKETSIZE;
     }
 
     fclose(fp);
