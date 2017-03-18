@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
             int index = 0;
             while (num_sent <= 4 && file_pos < file_len)
             {
-                perror("inside send loop\n");
+                //perror("inside send loop\n");
                 //construct packet
                 memset((char*)&sent_packet, 0, sizeof(sent_packet));
                 sent_packet.type = 0;
@@ -157,9 +157,9 @@ int main(int argc, char *argv[])
                 packet++;
                 num_sent++;
                 index++;
-                file_pos += 1024;
+                file_pos += sent_packet.len;
                 seq = seq % 30720 + sent_packet.len;
-                fprintf(stderr, "end of send loop iteration packet: %d num_sent: %d index: %d file_pos: %d seq: %d sent_packet.len: %d", packet, num_sent, index, file_pos, seq, sent_packet.len);
+                fprintf(stderr, "end of send loop iteration packet: %d num_sent: %d index: %d file_pos: %d seq: %d sent_packet.len: %d total_packets: %d file_len: %d", packet, num_sent, index, file_pos, seq, sent_packet.len, total_packets, (int) file_len);
             }
 
             int num_acked = 0;
@@ -201,11 +201,15 @@ int main(int argc, char *argv[])
                     if (first_expected_ack == recv_packet.ack)
                         ((Packet *)vector_get(&waiting_packets, 0))->ack = -1;
                     
+                    perror("mark 1\n");
+                    
                     while (first_expected_ack == recv_packet.ack && first_packet->ack == -1)
                     {
                         vector_delete(&waiting_packets, 0);
                         num_sent--;
                     }
+                    
+                    perror("mark 1\n");
                     
                     int i;
                     for (i = 0; i < vector_total(&waiting_packets); i++)
@@ -214,11 +218,14 @@ int main(int argc, char *argv[])
                             ((Packet *)vector_get(&waiting_packets, i))->ack = -1;
                     }
                     
+                    
                     for (i = 0; i < 5; i++)
                     {
                         if (timed_packets[i]->seq + timed_packets[i]->len == recv_packet.ack)
                             timed_packets[i] = NULL;
                     }
+                     
+                    
                 }
             }
         }
