@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     FILE *fp = fopen("received.data", "w+");
 
 
-    // SYN: type 3 , ack, seq, timer, len, buf
+    // SYN: type 3 , ack 0, seq 0, timer 0, len 0, buf ""
     Packet syn = { 3, 0, 0, {0,500000}, 0, ""}; //figure out the type
     if((numbytes = sendto(sockfd, &syn, sizeof(syn), 0, p->ai_addr, p->ai_addrlen)) == -1)
     {
@@ -73,14 +73,31 @@ int main(int argc, char *argv[])
     }
     printf("Sending SYN\n");
 
+    Packet recvd = {0, 0, 0, {0,500000}, 0, ""};
     //receive server's SYNACK
  	struct timespec SYNACKtimer = {3,0};
  	fd_set rdSet;
- 	// while(1){
- 	// 	FD_ZERO(&rdSet);
- 	// 	FD_SET(sockfd, &rdSet);
- 	// 	// if (select(sockfd+1))
- 	// }
+ 	while(1) {
+ 		FD_ZERO(&rdSet);
+ 		FD_SET(sockfd, &rdSet);
+ 		if ((select(sockfd+1, &rdSet, NULL, NULL, &SYNACKtimer)) == -1)
+		{
+			perror("ERROR: determining select status\n");
+		} else if (FD_ISSET(sockfd, &rdSet) != 1)
+		{
+			continue;
+		}
+			if(recvfrom(sockfd, &recvd, sizeof(recvd), 0, p->ai_addr, &(p->ai_addrlen)) == -1)
+			{
+				perror("ERROR: failed to receive SYN ACK\n");
+			}
+			//SYN ACK should be ACK and ack 1
+			if(recvd.type == 2 && recvd.ack == 1)
+			{
+				printf("Received SYNACK\n");
+			}
+
+ 	}
 
 
 
@@ -88,10 +105,12 @@ int main(int argc, char *argv[])
     //REQUEST:type 2 , ack, seq, timer, len, buf
     
     Packet request = { 2, 0, 0, {0,500000}, 0, argv[3]}; //figure out type
+    request.buf = argv[3];
 	if((numbytes = sendto(sockfd, &request, sizeof(request), 0, p->ai_addr, p->ai_addrlen) == -1))
     {
         perror("ERROR: failed to send filename\n");
     }
+    printf("Sending request packet\n");
 
     //buffer window of Packet pointers 
     int numPkts = 5;
@@ -105,9 +124,6 @@ int main(int argc, char *argv[])
 	//type 1 , ack, seq, timer, len, buf
     Packet ack = {1, 0, 0, {0,500000}, 0, ""};
     int nextSeq = 0;
-
-    //type data?
-    Packet recvd = {0, 0, 0, {0,500000}, 0, ""};
 
     //int fin = 0;
 
