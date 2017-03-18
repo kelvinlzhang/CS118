@@ -195,14 +195,27 @@ int main(int argc, char *argv[])
                 {
                     fprintf(stdout, "Receiving packet %d\n", recv_packet.ack);
                     
+                    /*
                     Packet* first_packet = (Packet *) vector_get(&waiting_packets, 0);
                     int first_expected_ack = first_packet->seq +first_packet->len;
                     
                     if (first_expected_ack == recv_packet.ack)
                         ((Packet *)vector_get(&waiting_packets, 0))->ack = -1;
+                    */
                     
-                    perror("mark 1\n");
                     
+                    int i;
+                    
+                    for (i = 0; i < 5; i++)
+                    {
+                        if ( vector_get(&waiting_packets, 0) != NULL && ((Packet *) vector_get(&waiting_packets, 0))->seq + ((Packet *) vector_get(&waiting_packets, 0))->len == recv_packet.ack)
+                        {
+                            vector_delete(&waiting_packets, 0);
+                            num_sent--;
+                        }
+                    }
+                    
+                    /*
                     while (first_expected_ack == recv_packet.ack && first_packet->ack == -1)
                     {
                         vector_delete(&waiting_packets, 0);
@@ -210,18 +223,18 @@ int main(int argc, char *argv[])
                     }
                     
                     perror("mark 1\n");
+                    */
                     
-                    int i;
                     for (i = 0; i < vector_total(&waiting_packets); i++)
                     {
-                        if (((Packet *)vector_get(&waiting_packets, i))->seq + ((Packet *)vector_get(&waiting_packets, i))->len == recv_packet.ack)
+                        if (vector_get(&waiting_packets, 0) != NULL && ((Packet *)vector_get(&waiting_packets, i))->seq + ((Packet *)vector_get(&waiting_packets, i))->len == recv_packet.ack)
                             ((Packet *)vector_get(&waiting_packets, i))->ack = -1;
                     }
-                    
+                     
                     
                     for (i = 0; i < 5; i++)
                     {
-                        if (timed_packets[i]->seq + timed_packets[i]->len == recv_packet.ack)
+                        if (timed_packets[i] != NULL && timed_packets[i]->seq + timed_packets[i]->len == recv_packet.ack)
                             timed_packets[i] = NULL;
                     }
                      
