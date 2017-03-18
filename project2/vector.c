@@ -54,7 +54,7 @@ void vector_delete(vector *v, int index)
         return;
     
     int i, j;
-    for (i = index+i; j = index; i < v->total; i++) {
+    for (i = index+i, j = index; i < v->total; i++) {
         v->items[j] = v->items[i];
         ++j;
     }

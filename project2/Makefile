@@ -7,7 +7,7 @@ client: client.o
 	$(CC) $(CFLAGS) -o client client.c
 	
 server: server.o
-	$(CC) $(CFLAG) -o server server.c
+	$(CC) $(CFLAG) vector.c server.c -o server
 
 clean:
 	rm -rf client server *.o
