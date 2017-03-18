@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         perror("ERROR: sending SYN-ACK.\n");
     fprintf(stdout, "Sending packet SYN-ACK\n");
 
-    struct timeval rto = {0, 50000};
+    struct timeval rto = {0, 500000};
     Packet** timed_packets = malloc(5*sizeof(Packet*));
     
     while(1)
@@ -166,6 +166,7 @@ int main(int argc, char *argv[])
 
             while (num_acked < num_sent)
             {
+                perror("inside ack check loop\n");
                 struct timespec master_timer;
                 clock_gettime(CLOCK_REALTIME, &master_timer); //timestamp of present time
                 int i;
