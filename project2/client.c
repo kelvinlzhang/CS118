@@ -134,6 +134,7 @@ int main(int argc, char *argv[])
     while(i < numPkts)
     {
     	pktBuf[i]  = NULL;
+    	i++;
     }
 	//type 1 , ack, seq, timer, len, buf
     Packet ack = {1, 0, 0, {0,500000}, 0, ""};
@@ -141,16 +142,19 @@ int main(int argc, char *argv[])
 
     //int fin = 0;
 
-    int expectedSeq;
+    int expectedSeq = 0;
+
     //connection open
     while (1)
     {
+    	// printf("First\n");
     	//recieve packet
     	memset((char*)&recvd, 0, sizeof(recvd));
     	if(recvfrom(sockfd, &recvd, MAXPACKETSIZE, 0, p->ai_addr, &(p->ai_addrlen)) == -1)
     	{
     		perror("ERROR: failed to receive packet\n");
     	}
+    	// printf("Second\n");
     	//SYNACK type 1 just found, send request with filename
     	if((recvd.type == 1) && (recvd.ack == 0))
     	{
@@ -160,12 +164,14 @@ int main(int argc, char *argv[])
     			perror("ERROR: failed to resend filename\n");
     		}
     	}
+    	// printf("Third\n");
     	//FIN received, type 4
     	if (recvd.type == 4)
     	{
     		printf("Receiving packet FIN\n");
     		break;
     	}
+    	// printf("Fourth\n");
     	//DATA received, type 0
     	if(recvd.type == 0)
     	{
