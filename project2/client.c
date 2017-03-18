@@ -65,30 +65,33 @@ int main(int argc, char *argv[])
     FILE *fp = fopen("received.data", "w+");
 
 
-    // // SYN: type 1 , ack, seq, timer, len, buf
-    // Packet syn = { 3, 0, 0, {0,500000}, 0, 0, ""}; //figure out the type
-    // if((numbytes = sendto(sockfd, &syn, HEADERSIZE + syn.len, 0, p->ai_addr, &(p->ai_addrlen))) == -1)
-    // {
-    // 	perror("ERROR: sending syn\n");
-    // }
+    // SYN: type 3 , ack, seq, timer, len, buf
+    Packet syn = { 3, 0, 0, {0,500000}, 0, ""}; //figure out the type
+    if((numbytes = sendto(sockfd, &syn, sizeof(syn), 0, p->ai_addr, p->ai_addrlen)) == -1)
+    {
+    	perror("ERROR: sending syn\n");
+    }
+    printf("Sending SYN\n");
 
-    // //receive server's SYNACK
-    // //need timer
-    //has an ack of -1?
+    //receive server's SYNACK
+ 	struct timespec SYNACKtimer = {3,0};
+ 	fd_set rdSet;
+ 	// while(1){
+ 	// 	FD_ZERO(&rdSet);
+ 	// 	FD_SET(sockfd, &rdSet);
+ 	// 	// if (select(sockfd+1))
+ 	// }
 
 
-    // //REQUEST (to respond to server's SYN ACK)
-    // // REQUEST:type 2 , ack, seq, timer, len, buf
-    //
-     // if ((numbytes = sendto(sockfd, argv[3], strlen(argv[3]), 0, p->ai_addr, p->ai_addrlen)) == -1)
-   
-	   
+
+    //REQUEST (to respond to server's SYN ACK)
+    //REQUEST:type 2 , ack, seq, timer, len, buf
+    
     Packet request = { 2, 0, 0, {0,500000}, 0, argv[3]}; //figure out type
 	if((numbytes = sendto(sockfd, &request, sizeof(request), 0, p->ai_addr, p->ai_addrlen) == -1))
     {
         perror("ERROR: failed to send filename\n");
     }
-
 
     //buffer window of Packet pointers 
     int numPkts = 5;
