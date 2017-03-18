@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     FILE *fp = fopen("received.data", "w+");
 
 
-    // // SYN: type 3, ack 0, seq 0, timer, retrans 0, len 0, buf """
+    // // SYN: type 1 , ack, seq, timer, len, buf
     // Packet syn = { 3, 0, 0, {0,500000}, 0, 0, ""}; //figure out the type
     // if((numbytes = sendto(sockfd, &syn, HEADERSIZE + syn.len, 0, p->ai_addr, &(p->ai_addrlen))) == -1)
     // {
@@ -78,7 +78,8 @@ int main(int argc, char *argv[])
 
 
     // //REQUEST (to respond to server's SYN ACK)
-    // // REQUEST: type 2, ack 0, seq 0, timer, retrans 0, len 0, buf """
+    // // REQUEST:type 2 , ack, seq, timer, len, buf
+    //
      // if ((numbytes = sendto(sockfd, argv[3], strlen(argv[3]), 0, p->ai_addr, p->ai_addrlen)) == -1)
    
 	   
@@ -89,66 +90,151 @@ int main(int argc, char *argv[])
     }
 
 
-
     //buffer window of Packet pointers 
     int numPkts = 5;
-    int bufferFilled = 0;
-    Packet** buffer = malloc(numPkts*sizeof(struct Packet*));
+    int pktBufCount = 0;
+    Packet** pktBuf = malloc(numPkts*sizeof(Packet*));
     int i = 0;
     while(i < numPkts)
     {
-    	buffer[i]  = NULL;
+    	pktBuf[i]  = NULL;
     }
-	//type, ack, seq, retrans, len, buf
-    Packet pkt = {0, 0, 0, {0,500000}, 0, ""};
+	//type 1 , ack, seq, timer, len, buf
+    Packet ack = {1, 0, 0, {0,500000}, 0, ""};
     int nextSeq = 0;
 
-    int fin = 0;
-    while (fin != 1)
+    //type data?
+    Packet recvd = {0, 0, 0, {0,500000}, 0, ""};
+
+    //int fin = 0;
+
+    int expectedSeq;
+    //connection open
+    while (1)
     {
-    	printf("before\n");
-    	numbytes = recvfrom(sockfd, &pkt, MAXPACKETSIZE, 0, p->ai_addr, &(p->ai_addrlen));
-    	printf("made it\n");
-    	printf("%s/n", pkt.buf);
+    	//recieve packet
+    	memset((char*)&recvd, 0, sizeof(recvd));
+    	if(recvfrom(sockfd, &recvd, MAXPACKETSIZE, 0, p->ai_addr, &(p->ai_addrlen)) == -1)
+    	{
+    		perror("ERROR: failed to receive packet\n");
+    	}
+    	//SYNACK type 1 just found, send request with filename
+    	if((recvd.type == 1) && (recvd.ack == 0))
+    	{
+    		printf("Attempting to retransmit filename request\n");
+    		if(sendto(sockfd, &request, sizeof(request), 0, p->ai_addr, p->ai_addrlen) == -1)
+    		{
+    			perror("ERROR: failed to resend filename\n");
+    		}
+    	}
+    	//FIN received, type 4
+    	if (recvd.type == 4)
+    	{
+    		printf("FIN received\n");
+    		break;
+    	}
+    	//DATA received, type 0
+    	if(recvd.type == 0)
+    	{
+    		printf("Packet #%d\n", recvd.seq);
+    		int min = expectedSeq;
+    		int max = expectedSeq + 4*MAXPACKETSIZE;
+    		int prevMin;
+    		int prevMax;
+    		if ((expectedSeq - 5*MAXPACKETSIZE) < 0)
+    		{
+    			prevMin = 0;
+    		} else
+    		{
+    			prevMin = expectedSeq - 5*MAXPACKETSIZE;
+    		}
+    		if ((expectedSeq - MAXPACKETSIZE) < 0)
+    		{
+    			prevMax = 4*MAXPACKETSIZE;
+    		} else
+    		{
+    			prevMax = expectedSeq - MAXPACKETSIZE;
+    		}
+
+    		//in order packet received
+    		if(recvd.seq == expectedSeq)
+    		{
+    			fwrite(recvd.buf, 1, recvd.len, fp);
+    			ack.ack = recvd.seq + recvd.len;
+    			expectedSeq += MAXPACKETSIZE;
+    		
+    			int i = 0;
+    			while(i < 5)
+    			{
+    				if (pktBuf[i]!= NULL)
+    				{
+    					if(pktBuf[i]->seq == expectedSeq)
+    					{
+    						fwrite(pktBuf[i]->buf, 1, pktBuf[i]->len, fp);
+    						pktBuf[i] = NULL;
+    						expectedSeq++;
+    						i = -1;
+    					}
+    				}
+    				i++;
+    			}
+    			Packet **nxtPktBuf = malloc(numPkts*sizeof(Packet*));
+    			pktBufCount = 0;
+    			int j;
+    			for (j =0; j < 5; j++)
+    			{
+    				nxtPktBuf[j] = NULL;
+    			} 
+    			for(j = 0; j < 5; j++)
+    			{
+    				if(pktBuf[j] != NULL)
+    				{
+    					nxtPktBuf[pktBufCount] = pktBuf[i];
+    					pktBufCount++;
+    				} 
+    			}
+    			pktBuf = nxtPktBuf;
+    		} else if ((recvd.seq > min) && (recvd.seq <= max)) //out of order
+    		{
+    			if (pktBufCount < numPkts)
+    			{
+    				Packet *toInsert = malloc(sizeof(Packet));
+    				toInsert->seq = recvd.seq;
+    				toInsert->len = recvd.len;
+    				memcpy(toInsert->buf, recvd.buf, recvd.len);
+    				pktBuf[pktBufCount] = toInsert;
+    				pktBufCount++;
+    				ack.ack = recvd.seq + recvd.len;
+    			} 
+    		} else if(recvd.seq < expectedSeq) //previous packet to ACK
+    		{
+    			ack.ack = recvd.seq;
+    		}
+    		else{ //ignore
+    			continue; 
+    		}
+    		//send ack
+    		if (sendto(sockfd, &ack, sizeof(ack), 0, p->ai_addr, p->ai_addrlen) == -1)
+    		{
+    			perror("ERROR: failed to send ACK\n");
+    		}
+    		printf("Sending ACK#%d\n", ack.ack);
+    	}
+
+
         
-        buf[numbytes] = '\0';
-        printf("Received %d bytes with sequence #%d\n", numbytes, pkt.seq);
-
-
-        fwrite(buf, sizeof(char), pkt.len, fp);
-        //save an array of the past 5 pre-window packets
-
-        // Packet *prev[5] = {};
-
-
-
-
-
-        //receive packet
-        //if packet is 
-        //expected sequence number is minimum sequence number?
-        //if rcvd sequence number > (expected sequence number + CWND)
-        	//discard this packet, no ACKs
-        //if rcvd sequence number == expected sequence number
-        	//write to file
-        	//this struct's seqNum += windowsize ????? upcoming packet may not be a full packet
-        	//clear out this struct's buffer
-        	//set this struct to unreceived
-        	//send an ACK packet out
-        //if (rcvd sequence number > expected sequence number) and (rcvd sequence number < (expected sequence number + CWND))
-        	//check if we already have this number buffered (check the struct's received flag)
-        		//send an ACK if so
-        	//if not seen before
-
-
-
-        //numbytes
-
-        numbytes = sendto(sockfd, &pkt, sizeof(pkt), 0, p->ai_addr, p->ai_addrlen);
-        fwrite(buf, 1, pkt.len, fp);
-        printf("Sent ACK #%d\n", pkt.seq + pkt.len);
-        nextSeq += MAXPACKETSIZE;
     }
+
+    //FINACK, type 1, ack, seq, timer, len, buf
+    Packet finAck = {1, recvd.seq, 0, {0,500000}, 0, ""};
+
+    if( sendto(sockfd, &finAck, sizeof(finAck), 0, p->ai_addr, p->ai_addrlen) == -1)
+    {
+    	perror("ERROR: failed to send FIN ACK\n");
+    }
+    printf("Sending FINACK#%d\n", finAck.ack);
+    printf("Connection closed\n");
+
 
     fclose(fp);
     close(sockfd);

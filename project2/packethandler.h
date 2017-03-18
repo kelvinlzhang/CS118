@@ -4,6 +4,7 @@
 #define CWND 5120
 #define MAXSEQNUM 30720
 #define RTO 500
+#define HEADERSIZE
 
 typedef struct Packet {
     int type;
