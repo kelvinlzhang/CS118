@@ -24,13 +24,10 @@ void *get_in_addr(struct sockaddr *sa)
 int main(int argc, char *argv[])
 {
     /*=================SOCKET===================*/
-    int sockfd;
-    struct addrinfo hints, *servinfo, *p;
-    int rv;
-    struct sockaddr_storage their_addr;
-    socklen_t addr_len;
-    char s[INET6_ADDRSTRLEN];
-
+    int sockfd, portno, addr_len;
+    struct sockaddr_in serveraddr, their_addr;
+    struct hostent *hostp;
+    char *hostaddrp;
     int numbytes;
     char buf[MAXPACKETSIZE];
 
@@ -40,44 +37,21 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    char *port = argv[1];
+    int port = atoi(argv[1]);
 
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_PASSIVE; // use my IP
-
-    if ((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0)
-    {
-        fprintf(stderr, "ERROR: getaddrinfo");
-        return 1;
-    }
-
-    //create and bind socket
-    for(p = servinfo; p != NULL; p = p->ai_next)
-    {
-        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
-        {
-            perror("ERROR: socket creation");
-            continue;
-        }
-
-        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
-        {
-            close(sockfd);
-            perror("ERROR: binding socket");
-            continue;
-        }
-        break;
-    }
-
-    if (p == NULL)
-    {
-        fprintf(stderr, "ERROR: binding socket\n");
-        return 2;
-    }
-
-    freeaddrinfo(servinfo);
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0)
+        perror("ERROR opening socket");
+    
+    bzero((char *) &serveraddr, sizeof(serveraddr));
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serveraddr.sin_port = htons((unsigned short)port);
+    
+    if (bind(sockfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
+        perror("ERROR on binding");
+    
+    addr_len = sizeof(their_addr);
     
     /*=================SYN===================*/
     Packet sent_packet, recv_packet;
